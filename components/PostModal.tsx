@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaChevronLeft, FaChevronRight, FaFacebook, FaInstagram, FaTiktok } from 'react-icons/fa';
 import { useSession } from 'next-auth/react';
 import CommentSection from './CommentSection';
+import PostVerificationModal from './PostVerificationModal';
 import type { Post } from '@/types/post';
 
 interface PostModalProps {
@@ -17,12 +18,15 @@ export default function PostModal({ post, onClose, onUpdate }: PostModalProps) {
   const { data: session } = useSession();
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [showFullGallery, setShowFullGallery] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
 
   // Combine videos and images into one media array
   const allMedia = [
     ...(post.videos || []).map(url => ({ type: 'video' as const, url })),
     ...post.images.map(url => ({ type: 'image' as const, url }))
   ];
+
+  const hasMedia = allMedia.length > 0;
 
   const nextMedia = () => {
     setCurrentMediaIndex((prev) => (prev + 1) % allMedia.length);
@@ -44,7 +48,9 @@ export default function PostModal({ post, onClose, onUpdate }: PostModalProps) {
   }, [currentMediaIndex]);
 
   return (
-    <AnimatePresence>
+    <>
+      {hasMedia && <PostVerificationModal postId={post.id} onVerify={() => setIsVerified(true)} />}
+      <AnimatePresence>
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
@@ -68,7 +74,18 @@ export default function PostModal({ post, onClose, onUpdate }: PostModalProps) {
           </button>
 
           <div className="overflow-y-auto max-h-[90vh]">
-            <div className="flex flex-col lg:flex-row">
+            {hasMedia && !isVerified ? (
+              // Jeśli jest media ale użytkownik nie jest zweryfikowany - pokaż wiadomość
+              <div className="h-full flex items-center justify-center p-6">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="text-3xl text-white">🔒</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2">Zawartość zablokowana</h3>
+                  <p className="text-gray-400">Aby wyświetlić zawartość tego postu, musisz potwierdzić warunki na górze ekranu.</p>
+                </div>
+              </div>
+            ) : (
               {/* Galeria mediów - lewa strona */}
               {allMedia.length > 0 && (
                 <div className="lg:w-1/2 relative bg-black">
@@ -263,9 +280,11 @@ export default function PostModal({ post, onClose, onUpdate }: PostModalProps) {
                 </div>
               </div>
             </div>
+            )}
           </div>
         </motion.div>
       </motion.div>
     </AnimatePresence>
+    </>
   );
 }
