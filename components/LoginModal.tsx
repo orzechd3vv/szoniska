@@ -2,7 +2,8 @@
 
 import { signIn } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaDiscord, FaGoogle, FaTimes } from 'react-icons/fa';
+import { FaGoogle, FaTimes, FaEnvelope } from 'react-icons/fa';
+import Link from 'next/link';
 
 interface LoginModalProps {
   onClose: () => void;
@@ -15,59 +16,86 @@ export default function LoginModal({ onClose }: LoginModalProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md px-4"
         onClick={onClose}
       >
         <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.8, opacity: 0 }}
-          transition={{ type: 'spring', duration: 0.5 }}
-          className="relative bg-gradient-to-br from-gray-900 to-black border-2 border-purple-500/50 rounded-2xl p-8 w-full max-w-md shadow-2xl shadow-purple-500/20"
+          initial={{ scale: 0.9, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.9, opacity: 0, y: 20 }}
+          transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+          className="relative glass-dark rounded-3xl p-8 w-full max-w-md overflow-hidden"
           onClick={(e) => e.stopPropagation()}
         >
+          {/* Background Glow */}
+          <div className="absolute -top-24 -left-24 w-48 h-48 bg-primary-600/20 blur-[100px]" />
+          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-blue-600/10 blur-[100px]" />
+
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors"
+            className="absolute top-6 right-6 text-gray-400 hover:text-white transition-colors p-2 hover:bg-white/10 rounded-full"
           >
-            <FaTimes size={24} />
+            <FaTimes size={20} />
           </button>
 
-          <h2 className="text-3xl font-bold text-center mb-2 bg-gradient-to-r from-purple-400 to-purple-600 bg-clip-text text-transparent">
-            Witaj w Szoniska!
-          </h2>
-          <p className="text-gray-400 text-center mb-8">
-            Zaloguj się, aby kontynuować
-          </p>
-
-          <div className="space-y-4">
-            <motion.button
-              whileHover={{ scale: 1.02, y: -2 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => signIn('discord', { callbackUrl: '/auth/callback' })}
-              className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-[#5865F2] hover:bg-[#4752C4] text-white font-semibold rounded-lg shadow-lg shadow-[#5865F2]/30 transition-all"
+          <div className="text-center mb-8">
+            <motion.h2 
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-4xl font-black mb-3 bg-gradient-to-r from-white via-primary-300 to-primary-600 bg-clip-text text-transparent"
             >
-              <FaDiscord size={24} />
-              Zaloguj się przez Discord
-            </motion.button>
+              Witaj ponownie
+            </motion.h2>
+            <p className="text-gray-400">
+              Zaloguj się do swojego konta Szoniska
+            </p>
+          </div>
 
+          <div className="space-y-4 relative z-10">
             <motion.button
               whileHover={{ scale: 1.02, y: -2 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => signIn('google', { callbackUrl: '/auth/callback' })}
-              className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-white hover:bg-gray-100 text-gray-900 font-semibold rounded-lg shadow-lg shadow-white/20 transition-all"
+              className="w-full flex items-center justify-center gap-4 px-6 py-4 bg-white hover:bg-gray-100 text-black font-bold rounded-2xl shadow-xl transition-all"
             >
-              <FaGoogle size={24} />
-              Zaloguj się przez Google
+              <FaGoogle size={20} />
+              Kontynuuj przez Google
             </motion.button>
+
+            <div className="relative py-4">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-white/10"></div>
+              </div>
+              <div className="relative flex justify-center text-xs uppercase tracking-widest text-gray-500">
+                <span className="px-3 bg-black/40 backdrop-blur-md">Lub tradycyjnie</span>
+              </div>
+            </div>
+
+            <Link href="/login" onClick={onClose}>
+              <motion.button
+                whileHover={{ scale: 1.02, y: -2 }}
+                whileTap={{ scale: 0.98 }}
+                className="w-full flex items-center justify-center gap-4 px-6 py-4 bg-white/5 hover:bg-white/10 border border-white/10 text-white font-bold rounded-2xl transition-all"
+              >
+                <FaEnvelope size={20} />
+                Email i Hasło
+              </motion.button>
+            </Link>
           </div>
 
-          <div className="mt-8 text-center">
-            <p className="text-sm text-gray-500">
-              Logując się, akceptujesz nasze{' '}
-              <span className="text-purple-400 hover:text-purple-300 cursor-pointer">
-                warunki korzystania
-              </span>
+          <div className="mt-8 text-center text-sm text-gray-500">
+            <p>
+              Nie masz jeszcze konta?{' '}
+              <Link 
+                href="/register" 
+                onClick={onClose}
+                className="text-primary-400 hover:text-primary-300 font-bold transition-colors"
+              >
+                Zarejestruj się
+              </Link>
+            </p>
+            <p className="mt-4 text-xs opacity-50">
+              Logując się akceptujesz nasz <Link href="/regulamin" className="underline">Regulamin</Link>
             </p>
           </div>
         </motion.div>
@@ -75,3 +103,4 @@ export default function LoginModal({ onClose }: LoginModalProps) {
     </AnimatePresence>
   );
 }
+

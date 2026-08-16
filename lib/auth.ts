@@ -1,10 +1,10 @@
 import { NextAuthOptions } from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
-import DiscordProvider from 'next-auth/providers/discord';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import bcrypt from 'bcryptjs';
 import speakeasy from 'speakeasy';
 import { prisma } from '@/lib/prisma';
+import { isUserAdmin } from './adminAuth';
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -28,9 +28,8 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Nieprawidłowy email lub hasło');
         }
 
-        if (!user.emailVerified) {
-          throw new Error('Email nie został zweryfikowany. Sprawdź swoją skrzynkę.');
-        }
+        // Pozwalamy na logowanie nawet bez weryfikacji (od razu po rejestracji)
+        // Weryfikacja będzie wymagana do niektórych akcji w przyszłości
 
         const isPasswordValid = await bcrypt.compare(credentials.password, user.password);
 
@@ -48,21 +47,12 @@ export const authOptions: NextAuthOptions = {
             throw new Error('2FA_REQUIRED'); // Specjalny błąd dla frontendu
           }
 
-          // Weryfikuj kod 2FA
-          console.log('Weryfikacja 2FA:', {
-            hasSecret: !!user.twoFactorSecret,
-            codeLength: credentials.twoFactorCode?.length,
-            code: credentials.twoFactorCode
-          });
-
           const verified = speakeasy.totp.verify({
             secret: user.twoFactorSecret,
             encoding: 'base32',
             token: credentials.twoFactorCode.toString().trim(),
             window: 2,
           });
-
-          console.log('Wynik weryfikacji:', verified);
 
           if (!verified) {
             throw new Error('Nieprawidłowy kod 2FA');
@@ -81,77 +71,48 @@ export const authOptions: NextAuthOptions = {
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
     }),
-    DiscordProvider({
-      clientId: process.env.DISCORD_CLIENT_ID!,
-      clientSecret: process.env.DISCORD_CLIENT_SECRET!,
-    }),
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
       if (!account) return false;
 
       try {
-        if (account.provider === 'discord') {
-          const discordProfile = profile as any;
-          const discordId = account.providerAccountId;
-
-          // Szukaj użytkownika po Discord ID
-          let dbUser = await prisma.user.findFirst({
-            where: { discordId },
-          });
-
-          if (dbUser) {
-            // Zaktualizuj istniejącego użytkownika
-            await prisma.user.update({
-              where: { id: dbUser.id },
-              data: {
-                name: discordProfile.username || discordProfile.global_name,
-                image: discordProfile.avatar
-                  ? `https://cdn.discordapp.com/avatars/${discordId}/${discordProfile.avatar}.png`
-                  : null,
-                discordUsername: discordProfile.username,
-              },
-            });
-          } else {
-            // Utwórz nowego użytkownika
-            dbUser = await prisma.user.create({
-              data: {
-                discordId,
-                discordUsername: discordProfile.username,
-                name: discordProfile.username || discordProfile.global_name,
-                email: discordProfile.email || null,
-                image: discordProfile.avatar
-                  ? `https://cdn.discordapp.com/avatars/${discordId}/${discordProfile.avatar}.png`
-                  : null,
-              },
-            });
-          }
-
-          // Zapisz ID użytkownika w user object
-          user.id = dbUser.id;
-        }
-
         if (account.provider === 'google') {
           const googleId = account.providerAccountId;
           const googleProfile = profile as any;
+          const email = googleProfile.email;
 
-          // Szukaj użytkownika po Google ID
+          // 1. Szukaj po Google ID
           let dbUser = await prisma.user.findFirst({
             where: { googleId },
           });
 
+          // 2. Jeśli nie ma po Google ID, szukaj po Emailu
+          if (!dbUser && email) {
+            dbUser = await prisma.user.findUnique({
+              where: { email },
+            });
+            
+            if (dbUser) {
+              // Przypisz Google ID do istniejącego konta
+              dbUser = await prisma.user.update({
+                where: { id: dbUser.id },
+                data: { googleId },
+              });
+            }
+          }
+
           if (dbUser) {
-            // Zaktualizuj
+            if (dbUser.isBlocked) return false;
+            
             await prisma.user.update({
               where: { id: dbUser.id },
               data: {
                 name: googleProfile.name,
-                email: googleProfile.email,
                 image: googleProfile.picture,
               },
             });
           } else {
-            // Utwórz nowego
             dbUser = await prisma.user.create({
               data: {
                 googleId,
@@ -172,7 +133,6 @@ export const authOptions: NextAuthOptions = {
       }
     },
     async jwt({ token, user, account }) {
-      // Przy pierwszym logowaniu zapisz ID użytkownika
       if (user) {
         token.sub = user.id;
       }
@@ -182,16 +142,12 @@ export const authOptions: NextAuthOptions = {
       if (session.user && token.sub) {
         session.user.id = token.sub;
 
-        // Pobierz użytkownika z bazy aby sprawdzić czy jest adminem
         const user = await prisma.user.findUnique({
           where: { id: token.sub },
         });
 
         if (user) {
-          const adminIds = process.env.ADMIN_DISCORD_IDS?.split(',') || [];
-          session.user.isAdmin = user.discordId ? adminIds.includes(user.discordId) : false;
-          
-          // Update name, email and image from database
+          session.user.isAdmin = isUserAdmin(user);
           session.user.name = user.name;
           session.user.email = user.email || '';
           session.user.image = user.image;
@@ -200,11 +156,9 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // Jeśli URL zawiera callbackUrl=/auth/callback, przekieruj tam
       if (url.includes('callbackUrl=%2Fauth%2Fcallback') || url.includes('callbackUrl=/auth/callback')) {
         return `${baseUrl}/auth/callback`;
       }
-      // Jeśli to URL z parametrem callbackUrl, użyj go
       if (url.includes('callbackUrl=')) {
         const urlObj = new URL(url, baseUrl);
         const callbackUrl = urlObj.searchParams.get('callbackUrl');
@@ -212,19 +166,15 @@ export const authOptions: NextAuthOptions = {
           return `${baseUrl}${callbackUrl}`;
         }
       }
-      // Jeśli URL jest relative i zaczyna się od /auth/callback
       if (url.startsWith('/auth/callback')) {
         return `${baseUrl}/auth/callback`;
       }
-      // Jeśli URL zaczyna się od baseUrl
       if (url.startsWith(baseUrl)) {
         return url;
       }
-      // Dla innych przypadków - po zalogowaniu idź przez loading
       if (url === baseUrl || url === `${baseUrl}/`) {
         return `${baseUrl}/auth/callback`;
       }
-      // Domyślnie
       return baseUrl;
     },
   },
@@ -235,3 +185,4 @@ export const authOptions: NextAuthOptions = {
     strategy: 'jwt',
   },
 };
+

@@ -8,9 +8,10 @@ import type { Comment } from '@/types/post';
 
 interface CommentSectionProps {
   postId: string;
+  onUpdate?: () => void;
 }
 
-export default function CommentSection({ postId }: CommentSectionProps) {
+export default function CommentSection({ postId, onUpdate }: CommentSectionProps) {
   const { data: session } = useSession();
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
@@ -50,6 +51,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
       if (res.ok) {
         setNewComment('');
         fetchComments();
+        if (onUpdate) onUpdate();
       }
     } catch (error) {
       console.error('Error posting comment:', error);
@@ -70,6 +72,7 @@ export default function CommentSection({ postId }: CommentSectionProps) {
       if (res.ok) {
         fetchComments();
         setDeletingComment(null);
+        if (onUpdate) onUpdate();
       } else {
         const data = await res.json();
         alert(data.error || 'Nie udało się usunąć komentarza');
@@ -90,9 +93,6 @@ export default function CommentSection({ postId }: CommentSectionProps) {
 
   return (
     <div>
-      <h3 className="text-xl font-bold text-white mb-4">
-        Komentarze ({comments.length})
-      </h3>
 
       {session && (
         <form onSubmit={handleSubmit} className="mb-6">

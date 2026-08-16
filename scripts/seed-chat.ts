@@ -7,17 +7,17 @@ async function seedChat() {
     console.log('🌱 Seeding chat messages...');
 
     // Get first admin user
-    const adminDiscordIds = process.env.ADMIN_DISCORD_IDS?.split(',') || [];
+    const adminEmails = process.env.ADMIN_EMAILS?.split(',') || [];
     const admin = await prisma.user.findFirst({
       where: {
-        discordId: {
-          in: adminDiscordIds,
+        email: {
+          in: adminEmails,
         },
       },
     });
 
     if (!admin) {
-      console.error('❌ No admin user found. Please set ADMIN_DISCORD_IDS in .env');
+      console.error('❌ No admin user found. Please set ADMIN_EMAILS in .env');
       return;
     }
 

@@ -16,8 +16,6 @@ declare module 'next-auth' {
     email?: string | null;
     name?: string | null;
     image?: string | null;
-    discordId?: string | null;
-    discordUsername?: string | null;
     googleId?: string | null;
   }
 }

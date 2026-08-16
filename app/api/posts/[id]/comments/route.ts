@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { isUserAdmin } from '@/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,7 +20,7 @@ export async function GET(
           select: {
             name: true,
             image: true,
-            discordId: true,
+            email: true,
           },
         },
       },
@@ -28,13 +29,11 @@ export async function GET(
       },
     });
 
-    // Dodaj isAdmin na podstawie discordId
-    const adminIds = process.env.ADMIN_DISCORD_IDS?.split(',') || [];
     const commentsWithAdmin = comments.map(comment => ({
       ...comment,
       user: {
         ...comment.user,
-        isAdmin: comment.user.discordId ? adminIds.includes(comment.user.discordId) : false,
+        isAdmin: isUserAdmin(comment.user),
       }
     }));
 

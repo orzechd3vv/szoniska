@@ -10,6 +10,7 @@ export async function GET(req: NextRequest) {
     const session = await getServerSession(authOptions);
     const { searchParams } = new URL(req.url);
     const search = searchParams.get('search');
+    const filter = searchParams.get('filter') || 'latest';
     
     // Sprawdź czy użytkownik jest zablokowany
     if (session?.user) {
@@ -33,10 +34,21 @@ export async function GET(req: NextRequest) {
 
     if (search) {
       whereCondition.OR = [
-        { title: { contains: search } },
-        { user: { name: { contains: search } } },
-        { user: { discordId: { contains: search } } },
+        { title: { contains: search, mode: 'insensitive' } },
+        { user: { name: { contains: search, mode: 'insensitive' } } },
       ];
+    }
+
+    const orderBy: any[] = [{ isPinned: 'desc' }];
+
+    if (filter === 'popular') {
+      orderBy.push({
+        comments: {
+          _count: 'desc'
+        }
+      });
+    } else {
+      orderBy.push({ createdAt: 'desc' });
     }
 
     const posts = await prisma.post.findMany({
@@ -46,18 +58,40 @@ export async function GET(req: NextRequest) {
           select: {
             name: true,
             image: true,
-            discordId: true,
           },
         },
+        votes: session?.user ? {
+          where: { userId: session.user.id },
+          select: { type: true }
+        } : false,
+        _count: {
+          select: { comments: true }
+        }
       },
-      orderBy: [
-        { isPinned: 'desc' },
-        { pinnedAt: 'desc' },
-        { createdAt: 'desc' },
-      ],
+      orderBy: orderBy,
     });
 
-    return NextResponse.json(posts);
+    // Post-process to get accurate counts and user vote
+    const postsWithVotes = await Promise.all(posts.map(async (post) => {
+      const upvotes = await prisma.vote.count({
+        where: { postId: post.id, type: 'UPVOTE' }
+      });
+      const downvotes = await prisma.vote.count({
+        where: { postId: post.id, type: 'DOWNVOTE' }
+      });
+      
+      const userVote = (post as any).votes?.[0]?.type || null;
+      
+      return {
+        ...post,
+        upvotes,
+        downvotes,
+        userVote,
+        votes: undefined // Remove raw votes from response
+      };
+    }));
+
+    return NextResponse.json(postsWithVotes);
   } catch (error) {
     console.error('Error fetching posts:', error);
     return NextResponse.json({ 
@@ -68,41 +102,52 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
+  console.log('>>> API POSTS: Request received');
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user) {
+      console.log('Post creation failed: Unauthorized');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = session.user.id;
+    console.log(`Starting post creation for user: ${userId}`);
+
     const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+      where: { id: userId },
       select: { isBlocked: true, isRestricted: true },
     });
 
-    if (user?.isBlocked) {
+    if (!user) {
+      console.log(`Post creation failed: User ${userId} not found in database`);
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    if (user.isBlocked) {
+      console.log(`Post creation failed: User ${userId} is blocked`);
       return NextResponse.json(
         { error: 'Twoje konto jest zablokowane. Nie możesz tworzyć postów.' },
         { status: 403 }
       );
     }
 
-    if (user?.isRestricted) {
+    if (user.isRestricted) {
+      console.log(`Post creation failed: User ${userId} is restricted`);
       return NextResponse.json(
         { error: 'Twoje konto ma ograniczenia. Nie możesz tworzyć postów.' },
         { status: 403 }
       );
     }
 
-    const userFull = await prisma.user.findUnique({
-      where: { id: session.user.id },
-    });
-
-    if (user?.isBlocked) {
-      return NextResponse.json({ error: 'Account blocked' }, { status: 403 });
-    }
-
     const body = await req.json();
     const { title, description, images, videos, facebookUrl, instagramUrl, tiktokUrl, isAnonymous } = body;
+
+    console.log('Creating post with data:', {
+      title,
+      imagesCount: images?.length || 0,
+      videosCount: videos?.length || 0,
+      isAnonymous
+    });
 
     const post = await prisma.post.create({
       data: {
@@ -114,14 +159,18 @@ export async function POST(req: NextRequest) {
         instagramUrl,
         tiktokUrl,
         isAnonymous: isAnonymous || false,
-        userId: session.user.id,
+        userId: userId,
         status: 'PENDING',
       },
     });
 
+    console.log(`Post created successfully: ${post.id}`);
     return NextResponse.json(post);
   } catch (error) {
     console.error('Error creating post:', error);
-    return NextResponse.json({ error: 'Failed to create post' }, { status: 500 });
+    return NextResponse.json({ 
+      error: 'Failed to create post',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }

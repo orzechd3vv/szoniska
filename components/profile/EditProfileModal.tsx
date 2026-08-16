@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaTimes, FaCamera, FaEdit, FaExclamationTriangle } from 'react-icons/fa';
+import { FaTimes, FaCamera, FaEdit, FaExclamationTriangle, FaUser, FaInfoCircle, FaShieldAlt } from 'react-icons/fa';
 
 interface EditProfileModalProps {
   onClose: () => void;
@@ -24,13 +24,11 @@ export default function EditProfileModal({ onClose, onSuccess }: EditProfileModa
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Check file size
     if (file.size > 5 * 1024 * 1024) {
       setError('Plik jest za duży (max 5MB)');
       return;
     }
 
-    // Check file type
     if (!file.type.startsWith('image/')) {
       setError('Plik musi być obrazem');
       return;
@@ -39,7 +37,6 @@ export default function EditProfileModal({ onClose, onSuccess }: EditProfileModa
     setError('');
     setAvatar(file);
     
-    // Create preview
     const reader = new FileReader();
     reader.onloadend = () => {
       setAvatarPreview(reader.result as string);
@@ -51,7 +48,6 @@ export default function EditProfileModal({ onClose, onSuccess }: EditProfileModa
     e.preventDefault();
     setError('');
 
-    // Show confirmation if name changed
     if (name !== session?.user?.name && !showConfirmation) {
       setShowConfirmation(true);
       return;
@@ -60,7 +56,6 @@ export default function EditProfileModal({ onClose, onSuccess }: EditProfileModa
     setUploading(true);
 
     try {
-      // Update name if changed
       if (name !== session?.user?.name) {
         const nameRes = await fetch('/api/user/profile', {
           method: 'PATCH',
@@ -74,7 +69,6 @@ export default function EditProfileModal({ onClose, onSuccess }: EditProfileModa
         }
       }
 
-      // Upload avatar if changed
       if (avatar) {
         const formData = new FormData();
         formData.append('file', avatar);
@@ -88,15 +82,10 @@ export default function EditProfileModal({ onClose, onSuccess }: EditProfileModa
           const data = await avatarRes.json();
           throw new Error(data.error || 'Failed to upload avatar');
         }
-
-        const avatarData = await avatarRes.json();
-        console.log('Avatar uploaded:', avatarData);
       }
 
-      // Update session and reload page
       await update();
       
-      // Small delay to ensure session update completes
       setTimeout(() => {
         window.location.reload();
       }, 500);
@@ -110,54 +99,64 @@ export default function EditProfileModal({ onClose, onSuccess }: EditProfileModa
 
   return (
     <AnimatePresence>
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-        onClick={onClose}
-      >
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <motion.div
-          initial={{ scale: 0.9, y: 20 }}
-          animate={{ scale: 1, y: 0 }}
-          exit={{ scale: 0.9, y: 20 }}
-          className="bg-gradient-to-br from-gray-900 to-black border-2 border-purple-500/50 rounded-2xl p-6 w-full max-w-md"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="absolute inset-0 bg-black/80 backdrop-blur-md"
+          onClick={onClose}
+        />
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.9, opacity: 0, y: 20 }}
+          className="glass rounded-[3rem] p-10 max-w-md w-full border-white/10 shadow-[0_0_80px_rgba(0,0,0,0.5)] relative z-10"
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-bold text-white">Edytuj profil</h2>
-            <button
-              onClick={onClose}
-              className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-            >
-              <FaTimes className="text-gray-400" size={20} />
+          <div className="flex items-center justify-between mb-10">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-primary-500/10 flex items-center justify-center text-primary-400">
+                <FaUser size={20} />
+              </div>
+              <div>
+                <h2 className="text-2xl font-black text-white">Edytuj profil</h2>
+                <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mt-1">Personalizacja konta</p>
+              </div>
+            </div>
+            <button onClick={onClose} className="w-10 h-10 glass rounded-xl flex items-center justify-center text-gray-500 hover:text-white transition-all">
+              <FaTimes size={18} />
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-8">
             {/* Avatar Upload */}
             <div className="flex flex-col items-center">
               <div className="relative group">
-                {avatarPreview ? (
-                  <img
-                    src={avatarPreview}
-                    alt="Avatar"
-                    className="w-32 h-32 rounded-full object-cover border-4 border-purple-500"
-                  />
-                ) : (
-                  <div className="w-32 h-32 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold text-4xl border-4 border-purple-500">
-                    {name.charAt(0).toUpperCase()}
-                  </div>
-                )}
+                <div className="w-32 h-32 rounded-[2.5rem] overflow-hidden border-2 border-primary-500/30 group-hover:border-primary-500 transition-all p-1 bg-black/40">
+                  {avatarPreview ? (
+                    <img
+                      src={avatarPreview}
+                      alt="Avatar"
+                      className="w-full h-full object-cover rounded-[2rem]"
+                    />
+                  ) : (
+                    <div className="w-full h-full rounded-[2rem] bg-primary-600/20 flex items-center justify-center text-primary-400 text-4xl font-black">
+                      {name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
                 
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="absolute inset-0 flex items-center justify-center bg-black/60 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="absolute -bottom-2 -right-2 w-10 h-10 bg-primary-500 text-white rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/40 border-2 border-[#020202] z-20"
                 >
-                  <FaCamera className="text-white" size={32} />
-                </button>
+                  <FaCamera size={16} />
+                </motion.button>
               </div>
               
               <input
@@ -168,14 +167,14 @@ export default function EditProfileModal({ onClose, onSuccess }: EditProfileModa
                 className="hidden"
               />
               
-              <p className="text-gray-400 text-sm mt-3">
-                Kliknij na avatar aby zmienić (max 5MB)
+              <p className="text-[9px] text-gray-600 font-black uppercase tracking-widest mt-4">
+                Zalecane: 512x512px, JPG/PNG (max 5MB)
               </p>
             </div>
 
             {/* Name Input */}
-            <div>
-              <label className="block text-sm font-medium text-gray-400 mb-2">
+            <div className="space-y-2">
+              <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">
                 Nazwa użytkownika
               </label>
               <div className="relative">
@@ -186,74 +185,80 @@ export default function EditProfileModal({ onClose, onSuccess }: EditProfileModa
                   minLength={2}
                   maxLength={50}
                   required
-                  className="w-full bg-gray-800 text-white px-4 py-3 pl-10 rounded-lg border border-purple-500/30 focus:border-purple-500 focus:outline-none transition-colors"
-                  placeholder="Twoja nazwa"
+                  className="input-field w-full pl-12"
+                  placeholder="Jak mamy Cię nazywać?"
                 />
-                <FaEdit className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                <FaEdit className="absolute left-4 top-1/2 -translate-y-1/2 text-primary-500" />
               </div>
-              <p className="text-gray-500 text-xs mt-2">
-                Możesz zmienić nazwę raz na 7 dni
-              </p>
+              <div className="flex items-center gap-2 px-1 text-[9px] text-gray-600 font-bold uppercase">
+                <FaInfoCircle className="text-primary-500/50" /> Zmiana możliwa raz na 7 dni
+              </div>
             </div>
 
             {/* Confirmation Warning */}
-            {showConfirmation && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-4"
-              >
-                <div className="flex items-start gap-3">
-                  <FaExclamationTriangle className="text-yellow-500 mt-1 flex-shrink-0" size={20} />
-                  <div>
-                    <p className="text-yellow-400 font-semibold mb-1">Potwierdź zmianę nazwy</p>
-                    <p className="text-yellow-300/80 text-sm">
-                      Czy na pewno chcesz zmienić nazwę na <strong>{name}</strong>? 
-                      Będziesz mógł ją zmienić ponownie dopiero za 7 dni.
-                    </p>
+            <AnimatePresence>
+              {showConfirmation && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="overflow-hidden"
+                >
+                  <div className="p-5 glass rounded-2xl border-amber-500/20 bg-amber-500/5">
+                    <div className="flex items-start gap-4">
+                      <FaExclamationTriangle className="text-amber-500 mt-1 flex-shrink-0" size={16} />
+                      <div>
+                        <p className="text-amber-500 font-black text-[10px] uppercase tracking-widest mb-1">Potwierdź zmianę nazwy</p>
+                        <p className="text-gray-400 text-xs font-medium leading-relaxed">
+                          Czy na pewno chcesz zmienić nazwę na <span className="text-white font-bold">{name}</span>? 
+                          Będziesz mógł ją zmienić ponownie dopiero za 7 dni.
+                        </p>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            )}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Error Message */}
-            {error && (
-              <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-3">
-                <p className="text-red-400 text-sm">{error}</p>
-              </div>
-            )}
+            <AnimatePresence>
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className="p-4 glass rounded-xl border-red-500/20 bg-red-500/5"
+                >
+                  <p className="text-red-400 text-[10px] font-black uppercase text-center">{error}</p>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Buttons */}
-            <div className="flex gap-3">
+            <div className="flex gap-4">
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={uploading}
-                className="flex-1 px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
+                className="flex-1 btn-primary py-4 font-black text-[10px] uppercase tracking-widest"
               >
-                {uploading ? 'Zapisywanie...' : showConfirmation ? 'Potwierdź' : 'Zapisz zmiany'}
+                {uploading ? 'Procesowanie...' : showConfirmation ? 'Potwierdź zmianę' : 'Zapisz profil'}
               </motion.button>
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 type="button"
-                onClick={() => {
-                  if (showConfirmation) {
-                    setShowConfirmation(false);
-                  } else {
-                    onClose();
-                  }
-                }}
+                onClick={() => showConfirmation ? setShowConfirmation(false) : onClose()}
                 disabled={uploading}
-                className="px-6 py-3 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-700 text-white font-semibold rounded-lg transition-colors"
+                className="px-8 py-4 glass rounded-[1.5rem] border-white/5 text-gray-500 hover:text-white font-black text-[10px] uppercase tracking-widest"
               >
                 Anuluj
               </motion.button>
             </div>
           </form>
         </motion.div>
-      </motion.div>
+      </div>
     </AnimatePresence>
   );
 }
+

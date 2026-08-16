@@ -5,7 +5,7 @@ import { v2 as cloudinary } from 'cloudinary';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
-export const maxDuration = 60; // 60 seconds max execution
+export const maxDuration = 300; // 5 minutes max for video uploads
 
 // Configure Cloudinary
 cloudinary.config({
@@ -15,14 +15,11 @@ cloudinary.config({
 });
 
 export async function POST(req: NextRequest) {
+  console.log('>>> API UPLOAD: Request received');
   try {
     // Check if Cloudinary is configured
     if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-      console.error('Cloudinary credentials missing:', {
-        cloud_name: !!process.env.CLOUDINARY_CLOUD_NAME,
-        api_key: !!process.env.CLOUDINARY_API_KEY,
-        api_secret: !!process.env.CLOUDINARY_API_SECRET,
-      });
+      console.error('Cloudinary credentials missing');
       return NextResponse.json({ 
         error: 'Server configuration error',
         details: 'Cloudinary credentials not configured'
@@ -31,6 +28,7 @@ export async function POST(req: NextRequest) {
 
     const session = await getServerSession(authOptions);
     if (!session?.user) {
+      console.log('>>> API UPLOAD: Unauthorized');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -41,52 +39,63 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
 
+    // Better video detection for size limits
+    const isVideoFile = file.type.startsWith('video/') || 
+                       /\.(mp4|mov|avi|wmv|flv|mkv|webm)$/i.test(file.name);
+
     // Check file size (max 100MB for videos, 10MB for images)
-    const maxSize = file.type.startsWith('video/') ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
+    const maxSize = isVideoFile ? 100 * 1024 * 1024 : 10 * 1024 * 1024;
     if (file.size > maxSize) {
       return NextResponse.json({ 
-        error: `File too large. Max size: ${file.type.startsWith('video/') ? '100MB' : '10MB'}` 
+        error: `Plik jest za duży. Maksymalny rozmiar dla ${isVideoFile ? 'filmów to 100MB' : 'zdjęć to 10MB'}` 
       }, { status: 400 });
     }
 
     console.log('Uploading file:', {
       name: file.name,
-      type: file.type,
-      size: `${(file.size / 1024 / 1024).toFixed(2)}MB`
+      type: file.type || 'unknown',
+      size: `${(file.size / 1024 / 1024).toFixed(2)}MB`,
+      detectedAsVideo: isVideoFile
     });
 
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
+    console.log(`>>> Starting Cloudinary upload for ${file.name} (${buffer.length} bytes)`);
+
+    // Detect if it's a video by type or extension
+    const isVideo = file.type.startsWith('video/') || 
+                    /\.(mp4|mov|avi|wmv|flv|mkv|webm)$/i.test(file.name);
+
     // Upload to Cloudinary
-    const uploadResponse = await new Promise((resolve, reject) => {
+    const result = await new Promise((resolve, reject) => {
       const uploadOptions: any = {
         folder: 'szoniska',
-        resource_type: 'auto',
+        resource_type: isVideo ? 'video' : 'auto',
       };
 
-      // Add video-specific options
-      if (file.type.startsWith('video/')) {
-        uploadOptions.chunk_size = 6000000; // 6MB chunks for large videos
+      if (isVideo) {
+        uploadOptions.chunk_size = 6000000;
         uploadOptions.eager_async = true;
       }
 
-      cloudinary.uploader.upload_stream(
+      const uploadStream = cloudinary.uploader.upload_stream(
         uploadOptions,
         (error, result) => {
           if (error) {
-            console.error('Cloudinary upload error:', error);
+            console.error('!!! Cloudinary Error:', error);
             reject(error);
           } else {
-            console.log('Upload successful:', result?.secure_url);
+            console.log('+++ Cloudinary Success:', result?.secure_url);
             resolve(result);
           }
         }
-      ).end(buffer);
+      );
+
+      uploadStream.end(buffer);
     });
 
-    const result = uploadResponse as any;
-    return NextResponse.json({ url: result.secure_url });
+    return NextResponse.json({ url: (result as any).secure_url });
   } catch (error) {
     console.error('Error uploading file:', error);
     return NextResponse.json({ 

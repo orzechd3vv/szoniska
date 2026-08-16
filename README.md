@@ -5,7 +5,7 @@ Nowoczesny portal społecznościowy z czarno-fioletową kolorystyką, płynnymi 
 ## 🚀 Funkcje
 
 ### Dla Użytkowników
-- ✅ Logowanie przez Discord lub Google
+- ✅ Logowanie przez Google
 - ✅ Przeglądanie zweryfikowanych postów na głównej stronie
 - ✅ Tworzenie postów z tytułem, opisem, zdjęciami (max 10) i linkami social media
 - ✅ Edycja własnych postów (tylko zatwierdzonych)
@@ -26,7 +26,7 @@ Nowoczesny portal społecznościowy z czarno-fioletową kolorystyką, płynnymi 
 
 - Node.js 18+ 
 - MongoDB
-- Konta OAuth (Discord i Google)
+- Konto OAuth (Google)
 
 ## ⚙️ Instalacja
 
@@ -62,13 +62,6 @@ Możesz użyć lokalnej instalacji MongoDB lub MongoDB Atlas (cloud).
    - `https://www.szoniska.pl/api/auth/callback/google`
 6. Skopiuj Client ID i Client Secret
 
-**Discord OAuth:**
-1. Przejdź do https://discord.com/developers/applications
-2. Kliknij "New Application"
-3. Przejdź do zakładki "OAuth2"
-4. Dodaj redirect URL: `https://www.szoniska.pl/api/auth/callback/discord`
-5. Skopiuj Client ID i Client Secret
-
 ### 4. Utwórz plik .env
 
 Skopiuj `.env.example` do `.env` i wypełnij danymi:
@@ -89,16 +82,9 @@ NEXTAUTH_SECRET="wygeneruj-losowy-secret"  # użyj: openssl rand -base64 32
 GOOGLE_CLIENT_ID="twoj-google-client-id"
 GOOGLE_CLIENT_SECRET="twoj-google-client-secret"
 
-DISCORD_CLIENT_ID="twoj-discord-client-id"
-DISCORD_CLIENT_SECRET="twoj-discord-client-secret"
-
-# Discord ID administratorów (oddzielone przecinkami)
-ADMIN_DISCORD_IDS="twoj-discord-id,inny-admin-discord-id"
+# Administratorzy (adresy email oddzielone przecinkami)
+ADMIN_EMAILS="twoj-admin-email@gmail.com,inny-admin-email@gmail.com"
 ```
-
-**Jak znaleźć swoje Discord ID:**
-1. Włącz tryb dewelopera w Discord (Ustawienia → Zaawansowane → Tryb dewelopera)
-2. Kliknij prawym przyciskiem na swój profil → "Kopiuj ID użytkownika"
 
 ### 5. Zainicjuj bazę danych
 
@@ -161,21 +147,21 @@ Szoniska/
 - **UI:** React 18, Tailwind CSS
 - **Animacje:** Framer Motion
 - **Baza danych:** MongoDB + Prisma ORM
-- **Autentykacja:** NextAuth.js (Discord & Google OAuth)
+- **Autentykacja:** NextAuth.js (Google OAuth)
 - **Ikony:** React Icons
 - **TypeScript:** Pełne typowanie
 
 ## 🔒 Bezpieczeństwo
 
 - Wszystkie endpointy API są zabezpieczone autentykacją
-- Rola administratora sprawdzana na podstawie Discord ID
+- Rola administratora sprawdzana na podstawie adresu email
 - Walidacja uprawnień przed każdą operacją
 - Zablokowane konta nie mogą tworzyć postów ani komentarzy
 
 ## 📝 Użytkowanie
 
 ### Jako użytkownik:
-1. Zaloguj się przez Discord lub Google
+1. Zaloguj się przez Google
 2. Przeglądaj posty na stronie głównej
 3. Kliknij post aby zobaczyć szczegóły, galerię i komentarze
 4. W profilu utwórz nowy post
@@ -183,7 +169,7 @@ Szoniska/
 6. Po zatwierdzeniu możesz edytować post
 
 ### Jako administrator:
-1. Zaloguj się przez Discord (z ID w ADMIN_DISCORD_IDS)
+1. Zaloguj się przez Google (z emailem w ADMIN_EMAILS)
 2. W profilu pojawi się zakładka "Panel"
 3. W "Weryfikowanie" zatwierdzaj/odrzucaj posty
 4. W "Użytkownicy" zarządzaj kontami użytkowników

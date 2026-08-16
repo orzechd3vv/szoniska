@@ -2,6 +2,15 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
+/**
+ * Centralized logic to check if a user object/data represents an admin.
+ */
+export function isUserAdmin(userData: { email?: string | null }) {
+  const adminEmails = process.env.ADMIN_EMAILS?.split(',') || [];
+
+  return userData.email ? adminEmails.includes(userData.email) : false;
+}
+
 export async function checkAdminPermissions() {
   const session = await getServerSession(authOptions);
   
@@ -17,8 +26,7 @@ export async function checkAdminPermissions() {
     return { isAdmin: false, error: 'Użytkownik nie znaleziony', status: 404, user: null };
   }
 
-  // Sprawdź czy użytkownik jest adminem (przez email lub Discord ID)
-  const isAdmin = user.email === 'orzech363@gmail.com' || user.discordId === '1144910054001225779';
+  const isAdmin = isUserAdmin(user);
 
   if (!isAdmin) {
     return { isAdmin: false, error: 'Brak uprawnień', status: 403, user };
@@ -26,3 +34,4 @@ export async function checkAdminPermissions() {
 
   return { isAdmin: true, error: null, status: 200, user };
 }
+

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { isUserAdmin } from '@/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,8 +36,7 @@ export async function POST(req: NextRequest) {
       where: { email: session.user.email },
     });
 
-    const adminDiscordIds = process.env.ADMIN_DISCORD_IDS?.split(',') || [];
-    const isAdmin = user?.discordId && adminDiscordIds.includes(user.discordId);
+    const isAdmin = user && isUserAdmin(user);
 
     if (!isAdmin) {
       return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403 });

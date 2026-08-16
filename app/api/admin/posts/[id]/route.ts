@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { isUserAdmin } from '@/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,10 +21,7 @@ export async function DELETE(
       where: { id: session.user.id },
     });
 
-    const isAdmin = admin && (
-      admin.email === 'orzech363@gmail.com' ||
-      admin.discordId === '1144910054001225779'
-    );
+    const isAdmin = admin && isUserAdmin(admin);
 
     if (!isAdmin) {
       return NextResponse.json({ error: 'Brak uprawnień' }, { status: 403 });

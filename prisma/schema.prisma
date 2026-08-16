@@ -1,5 +1,5 @@
 // This is your Prisma schema file
-// For MongoDB
+// For PostgreSQL (Supabase)
 
 generator client {
   provider = "prisma-client-js"
@@ -7,12 +7,13 @@ generator client {
 }
 
 datasource db {
-  provider = "mongodb"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 model User {
-  id            String    @id @default(auto()) @map("_id") @db.ObjectId
+  id            String    @id @default(uuid())
   email         String?   @unique
   emailVerified Boolean   @default(false)
   name          String?
@@ -21,8 +22,6 @@ model User {
   password      String?
   passwordResetToken String?
   passwordResetExpiry DateTime?
-  discordId     String?
-  discordUsername String?
   googleId      String?
   twoFactorSecret String?
   twoFactorEnabled Boolean @default(false)
@@ -37,20 +36,22 @@ model User {
   accounts      Account[]
   sessions      Session[]
   chatMessages  ChatMessage[]
+  reputation    Int       @default(0)
+  votes         Vote[]
 }
 
 model Account {
-  id                String  @id @default(auto()) @map("_id") @db.ObjectId
-  userId            String  @db.ObjectId
+  id                String  @id @default(uuid())
+  userId            String
   type              String
   provider          String
   providerAccountId String
-  refresh_token     String?
-  access_token      String?
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
   expires_at        Int?
   token_type        String?
   scope             String?
-  id_token          String?
+  id_token          String? @db.Text
   session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -59,17 +60,17 @@ model Account {
 }
 
 model Session {
-  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  id           String   @id @default(uuid())
   sessionToken String   @unique
-  userId       String   @db.ObjectId
+  userId       String
   expires      DateTime
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Post {
-  id              String    @id @default(auto()) @map("_id") @db.ObjectId
+  id              String    @id @default(uuid())
   title           String
-  description     String
+  description     String    @db.Text
   images          String[]
   videos          String[]
   facebookUrl     String?
@@ -82,10 +83,11 @@ model Post {
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
   editedAt        DateTime?
-  userId          String    @db.ObjectId
+  userId          String
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   comments        Comment[]
   warnings        PostWarning[]
+  votes           Vote[]
 }
 
 enum PostStatus {
@@ -95,41 +97,41 @@ enum PostStatus {
 }
 
 model Comment {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  content   String
+  id        String   @id @default(uuid())
+  content   String   @db.Text
   createdAt DateTime @default(now())
-  userId    String   @db.ObjectId
-  postId    String   @db.ObjectId
+  userId    String
+  postId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
 
 model Warning {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  message   String
+  id        String   @id @default(uuid())
+  message   String   @db.Text
   createdAt DateTime @default(now())
-  userId    String   @db.ObjectId
+  userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model PostWarning {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  message   String
+  id        String   @id @default(uuid())
+  message   String   @db.Text
   createdAt DateTime @default(now())
-  postId    String   @db.ObjectId
+  postId    String
   post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
 }
 
 model ChatMessage {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  content   String
+  id        String   @id @default(uuid())
+  content   String   @db.Text
   createdAt DateTime @default(now())
-  userId    String   @db.ObjectId
+  userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String   @id @default(uuid())
   email     String
   token     String   @unique
   type      TokenType
@@ -143,26 +145,26 @@ enum TokenType {
 }
 
 model TwoFactorLogin {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @db.ObjectId
+  id        String   @id @default(uuid())
+  userId    String
   token     String   @unique
   expires   DateTime
   createdAt DateTime @default(now())
 }
 
 model Update {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  id        String   @id @default(uuid())
   version   String
   title     String
-  content   String
+  content   String   @db.Text
   isPinned  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  authorId  String   @db.ObjectId
+  authorId  String
 }
 
 model SystemMaintenance {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  id          String    @id @default(uuid())
   type        String    // "profile" - typ utrzymania
   reason      String    // Powód wyłączenia
   startTime   DateTime  @default(now())
@@ -173,11 +175,28 @@ model SystemMaintenance {
 }
 
 model Announcement {
-  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  id          String    @id @default(uuid())
   message     String    // Treść ogłoszenia
   type        String    @default("info") // "info", "warning", "error", "success"
   isActive    Boolean   @default(true)
   createdBy   String    // Admin ID który utworzył
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+model Vote {
+  id        String   @id @default(uuid())
+  type      VoteType
+  userId    String
+  postId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, postId])
+}
+
+enum VoteType {
+  UPVOTE
+  DOWNVOTE
 }

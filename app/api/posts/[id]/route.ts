@@ -10,6 +10,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    const session = await getServerSession(authOptions);
     const post = await prisma.post.findUnique({
       where: { id: params.id },
       include: {
@@ -25,6 +26,10 @@ export async function GET(
             createdAt: 'desc',
           },
         },
+        votes: session?.user ? {
+          where: { userId: session.user.id },
+          select: { type: true }
+        } : false,
       },
     });
 
@@ -32,7 +37,21 @@ export async function GET(
       return NextResponse.json({ error: 'Post not found' }, { status: 404 });
     }
 
-    return NextResponse.json(post);
+    const upvotes = await prisma.vote.count({
+      where: { postId: post.id, type: 'UPVOTE' }
+    });
+    const downvotes = await prisma.vote.count({
+      where: { postId: post.id, type: 'DOWNVOTE' }
+    });
+    const userVote = (post as any).votes?.[0]?.type || null;
+
+    return NextResponse.json({
+      ...post,
+      upvotes,
+      downvotes,
+      userVote,
+      votes: undefined
+    });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch post' }, { status: 500 });
   }
@@ -126,7 +145,7 @@ export async function DELETE(
       where: { id: params.id },
     });
 
-    if (!post || post.userId !== session.user.id) {
+    if (!post || (post.userId !== session.user.id && !session.user.isAdmin)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

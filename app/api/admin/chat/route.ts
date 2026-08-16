@@ -24,7 +24,7 @@ export async function GET() {
             id: true,
             name: true,
             image: true,
-            discordUsername: true,
+
           },
         },
       },
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
             id: true,
             name: true,
             image: true,
-            discordUsername: true,
+
           },
         },
       },

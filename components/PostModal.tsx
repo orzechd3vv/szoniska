@@ -1,290 +1,287 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaTimes, FaChevronLeft, FaChevronRight, FaFacebook, FaInstagram, FaTiktok } from 'react-icons/fa';
+import { FaTimes, FaUserSecret, FaCalendarAlt, FaShareAlt, FaComments, FaCheck, FaArrowLeft, FaUser, FaArrowUp, FaArrowDown } from 'react-icons/fa';
+import { createPortal } from 'react-dom';
 import { useSession } from 'next-auth/react';
+import VideoPlayer from './VideoPlayer';
 import CommentSection from './CommentSection';
-import PostVerificationModal from './PostVerificationModal';
-import type { Post } from '@/types/post';
+
+import { Post } from '@/types/post';
 
 interface PostModalProps {
   post: Post;
   onClose: () => void;
-  onUpdate: () => void;
+  onUpdate?: () => void;
 }
 
-export default function PostModal({ post, onClose, onUpdate }: PostModalProps) {
+export default function PostModal({ post: initialPost, onClose, onUpdate }: PostModalProps) {
   const { data: session } = useSession();
+  const [post, setPost] = useState<Post>(initialPost);
+  const [loading, setLoading] = useState(false);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
-  const [showFullGallery, setShowFullGallery] = useState(false);
-  const [isVerified, setIsVerified] = useState(false);
-
-  // Combine videos and images into one media array
-  const allMedia = [
-    ...(post.videos || []).map(url => ({ type: 'video' as const, url })),
-    ...post.images.map(url => ({ type: 'image' as const, url }))
-  ];
-
-  const hasMedia = allMedia.length > 0;
-
-  const nextMedia = () => {
-    setCurrentMediaIndex((prev) => (prev + 1) % allMedia.length);
-  };
-
-  const prevMedia = () => {
-    setCurrentMediaIndex((prev) => (prev - 1 + allMedia.length) % allMedia.length);
-  };
+  const [isCopied, setIsCopied] = useState(false);
+  const [showUserMenu, setShowUserMenu] = useState(false);
+  const [upvotes, setUpvotes] = useState(initialPost.upvotes || 0);
+  const [downvotes, setDownvotes] = useState(initialPost.downvotes || 0);
+  const [userVote, setUserVote] = useState<'UPVOTE' | 'DOWNVOTE' | null>(initialPost.userVote || null);
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-      if (e.key === 'ArrowLeft' && allMedia.length > 0) prevMedia();
-      if (e.key === 'ArrowRight' && allMedia.length > 0) nextMedia();
-    };
+    setPost(initialPost);
+    setUpvotes(initialPost.upvotes || 0);
+    setDownvotes(initialPost.downvotes || 0);
+    setUserVote(initialPost.userVote || null);
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentMediaIndex]);
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [initialPost]);
 
-  return (
-    <>
-      {hasMedia && <PostVerificationModal postId={post.id} onVerify={() => setIsVerified(true)} />}
-      <AnimatePresence>
+  const handleVote = async (type: 'UPVOTE' | 'DOWNVOTE') => {
+    if (!session) return;
+
+    // Save previous state for rollback
+    const prevUserVote = userVote;
+    const prevUpvotes = upvotes;
+    const prevDownvotes = downvotes;
+
+    // Calculate optimistic new state instantly (0ms latency)
+    let newVote: 'UPVOTE' | 'DOWNVOTE' | null = type;
+    let newUpvotes = prevUpvotes;
+    let newDownvotes = prevDownvotes;
+
+    if (prevUserVote === type) {
+      newVote = null;
+      if (type === 'UPVOTE') newUpvotes = Math.max(0, prevUpvotes - 1);
+      else newDownvotes = Math.max(0, prevDownvotes - 1);
+    } else {
+      if (prevUserVote === 'UPVOTE') newUpvotes = Math.max(0, prevUpvotes - 1);
+      if (prevUserVote === 'DOWNVOTE') newDownvotes = Math.max(0, prevDownvotes - 1);
+
+      if (type === 'UPVOTE') newUpvotes += 1;
+      if (type === 'DOWNVOTE') newDownvotes += 1;
+    }
+
+    // Apply instantly
+    setUserVote(newVote);
+    setUpvotes(newUpvotes);
+    setDownvotes(newDownvotes);
+
+    try {
+      const res = await fetch(`/api/posts/${post.id}/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setUpvotes(data.upvotes);
+        setDownvotes(data.downvotes);
+        setUserVote(data.userVote);
+        if (onUpdate) onUpdate();
+      } else {
+        setUserVote(prevUserVote);
+        setUpvotes(prevUpvotes);
+        setDownvotes(prevDownvotes);
+      }
+    } catch (error) {
+      console.error('Error voting:', error);
+      setUserVote(prevUserVote);
+      setUpvotes(prevUpvotes);
+      setDownvotes(prevDownvotes);
+    }
+  };
+
+  const handleShare = () => {
+    const url = `${window.location.origin}/posts/${post.id}`;
+    navigator.clipboard.writeText(url);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
+
+  if (loading || !post) return null;
+
+  const allMedia = [
+    ...(post.videos || []).map(url => ({ type: 'video' as const, url })),
+    ...(post.images || []).map(url => ({ type: 'image' as const, url }))
+  ];
+
+  return createPortal(
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 overflow-hidden">
+      {/* Background Glows */}
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 overflow-y-auto"
         onClick={onClose}
+        className="absolute inset-0 bg-[#03000a] backdrop-blur-3xl"
       >
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          exit={{ scale: 0.9, opacity: 0 }}
-          transition={{ type: 'spring', duration: 0.5 }}
-          className="relative bg-gradient-to-br from-gray-900 to-black border-2 border-purple-500/50 rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden shadow-2xl shadow-purple-500/20"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 z-10 text-gray-400 hover:text-white bg-black/50 p-2 rounded-full backdrop-blur-sm transition-colors"
-          >
-            <FaTimes size={24} />
-          </button>
+        <div className="absolute top-[-10%] left-[-10%] w-[70%] h-[70%] bg-primary-600/25 blur-[140px] rounded-full animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[70%] h-[70%] bg-purple-600/20 blur-[140px] rounded-full" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-gradient-to-br from-primary-900/10 via-transparent to-purple-900/10" />
+      </motion.div>
 
-          <div className="overflow-y-auto max-h-[90vh]">
-            {hasMedia && !isVerified ? (
-              // Jeśli jest media ale użytkownik nie jest zweryfikowany - pokaż wiadomość
-              <div className="h-full flex items-center justify-center p-6">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-to-br from-pink-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <span className="text-3xl text-white">🔒</span>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, filter: 'blur(20px)' }}
+        animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+        className="relative w-full h-full flex flex-col z-10"
+      >
+        {/* Cinematic Header */}
+        <header className="w-full py-5 bg-transparent">
+          <div className="max-w-8xl mx-auto px-6 sm:px-12">
+            <div className="flex items-center justify-between">
+              <div onClick={onClose} className="flex items-center gap-4 sm:gap-6 cursor-pointer group touch-manipulation">
+                <div className="flex items-center gap-3 sm:gap-4">
+                  <div className="relative w-11 h-11 sm:w-12 sm:h-12 glass rounded-2xl flex items-center justify-center overflow-hidden border-primary-500/40 shadow-xl">
+                    <img src="/logo.png" alt="Logo" className="w-7 h-7 sm:w-8 sm:h-8 object-contain" />
                   </div>
-                  <h3 className="text-xl font-bold text-white mb-2">Zawartość zablokowana</h3>
-                  <p className="text-gray-400">Aby wyświetlić zawartość tego postu, musisz potwierdzić warunki na górze ekranu.</p>
+                  <div className="flex flex-col">
+                    <h1 className="text-xl sm:text-2xl font-black tracking-tighter text-white uppercase italic">SZONISKA<span className="text-primary-400">.</span></h1>
+                    <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.3em] text-gray-400 font-bold">Content</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/5 text-gray-400 group-hover:text-white transition-all ml-2 sm:ml-4 border border-white/10">
+                  <FaArrowLeft className="group-hover:-translate-x-1 transition-transform text-[10px]" />
+                  <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Powrót</span>
                 </div>
               </div>
-            ) : (
-              {/* Galeria mediów - lewa strona */}
-              {allMedia.length > 0 && (
-                <div className="lg:w-1/2 relative bg-black">
-                  <div className="relative aspect-square">
-                    <AnimatePresence mode="wait">
-                      {allMedia[currentMediaIndex].type === 'video' ? (
-                        <motion.video
-                          key={currentMediaIndex}
-                          src={allMedia[currentMediaIndex].url}
-                          controls
-                          className="w-full h-full object-contain"
-                          initial={{ opacity: 0, x: 100 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -100 }}
-                          transition={{ duration: 0.3 }}
-                        />
-                      ) : (
-                        <motion.img
-                          key={currentMediaIndex}
-                          src={allMedia[currentMediaIndex].url}
-                          alt={`${post.title} - media ${currentMediaIndex + 1}`}
-                          className="w-full h-full object-contain"
-                          initial={{ opacity: 0, x: 100 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -100 }}
-                          transition={{ duration: 0.3 }}
-                        />
-                      )}
-                    </AnimatePresence>
 
-                    {allMedia.length > 1 && (
-                      <>
-                        <button
-                          onClick={prevMedia}
-                          className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white p-3 rounded-full backdrop-blur-sm transition-all z-10"
-                        >
-                          <FaChevronLeft size={24} />
-                        </button>
-                        <button
-                          onClick={nextMedia}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/70 hover:bg-black/90 text-white p-3 rounded-full backdrop-blur-sm transition-all z-10"
-                        >
-                          <FaChevronRight size={24} />
-                        </button>
-
-                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-black/70 px-4 py-2 rounded-full backdrop-blur-sm z-10">
-                          <span className="text-white text-sm">
-                            {currentMediaIndex + 1} / {allMedia.length}
-                          </span>
-                        </div>
-                      </>
+              <div className="flex items-center gap-4 sm:gap-6">
+                <motion.button
+                  onClick={handleShare}
+                  animate={{
+                    backgroundColor: isCopied ? '#10b981' : 'rgba(255, 255, 255, 0.05)',
+                    borderColor: isCopied ? '#34d399' : 'rgba(255, 255, 255, 0.15)',
+                  }}
+                  className="relative flex items-center justify-center gap-3 px-6 sm:px-10 py-3 sm:py-3.5 text-white rounded-2xl transition-all border-2 touch-manipulation shadow-xl"
+                >
+                  <AnimatePresence mode="wait">
+                    {isCopied ? (
+                      <motion.div key="copied" initial={{ y: 15, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex items-center gap-2">
+                        <FaCheck size={12} /> <span className="text-[10px] font-black uppercase tracking-widest">Skopiowano</span>
+                      </motion.div>
+                    ) : (
+                      <motion.div key="share" initial={{ y: 15, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="flex items-center gap-3">
+                        <FaShareAlt size={12} /> <span className="text-[10px] font-black uppercase tracking-widest">Udostępnij</span>
+                      </motion.div>
                     )}
-                  </div>
+                  </AnimatePresence>
+                </motion.button>
+              </div>
+            </div>
+          </div>
+        </header>
 
-                  {/* Miniaturki */}
-                  {allMedia.length > 1 && (
-                    <div className="grid grid-cols-5 gap-2 p-4 bg-black/50">
-                      {allMedia.map((media, idx) => (
-                        <motion.div
-                          key={idx}
-                          whileHover={{ scale: 1.1 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => setCurrentMediaIndex(idx)}
-                          className={`aspect-square cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
-                            idx === currentMediaIndex
-                              ? 'border-purple-500'
-                              : 'border-transparent opacity-60 hover:opacity-100'
-                          }`}
-                        >
-                          {media.type === 'video' ? (
-                            <video
-                              src={media.url}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <img
-                              src={media.url}
-                              alt={`Miniatura ${idx + 1}`}
-                              className="w-full h-full object-cover"
-                            />
-                          )}
-                        </motion.div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
+        {/* Modal Body */}
+        <div className="flex-1 overflow-y-auto px-4 sm:px-12 py-6 scrollbar-hide">
+          <div className="max-w-8xl mx-auto flex flex-col lg:flex-row gap-12 lg:gap-16 relative">
 
-              {/* Treść posta - prawa strona */}
-              <div className={`${allMedia.length > 0 ? 'lg:w-1/2' : 'w-full'} p-6 flex flex-col`}>
-                <div className="flex items-center gap-3 mb-4">
-                  {post.isAnonymous ? (
-                    <>
-                      <img
-                        src="/logo.png"
-                        alt="Anonimowy"
-                        className="w-12 h-12 rounded-full"
-                      />
-                      <div>
-                        <p className="font-semibold text-white text-lg">Anonimowy</p>
-                        <p className="text-sm text-gray-400">
-                          {new Date(post.createdAt).toLocaleDateString('pl-PL', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric',
-                          })}
-                        </p>
+            {/* Left Column: Media */}
+            <div className="lg:w-[60%] space-y-6">
+              <div className="relative aspect-video glass rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden border-white/15 bg-black shadow-2xl group/media">
+                <AnimatePresence mode="wait">
+                  <motion.div key={currentMediaIndex} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full h-full">
+                    {allMedia[currentMediaIndex]?.type === 'video' ? (
+                      <VideoPlayer src={allMedia[currentMediaIndex].url} />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center p-4">
+                        <img src={allMedia[currentMediaIndex]?.url} className="max-w-full max-h-full object-contain" alt="" />
                       </div>
-                    </>
-                  ) : (
-                    <>
-                      {post.user.image ? (
-                        <img
-                          src={post.user.image}
-                          alt={post.user.name}
-                          className="w-12 h-12 rounded-full"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold text-lg">
-                          {post.user.name.charAt(0).toUpperCase()}
-                        </div>
-                      )}
-                      <div>
-                        <p className="font-semibold text-white text-lg">{post.user.name}</p>
-                        <p className="text-sm text-gray-400">
-                          {new Date(post.createdAt).toLocaleDateString('pl-PL', {
-                            day: 'numeric',
-                            month: 'long',
-                            year: 'numeric',
-                          })}
-                        </p>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                <h2 className="text-3xl font-bold text-white mb-4">{post.title}</h2>
-                <p className="text-gray-300 mb-6 whitespace-pre-wrap">{post.description}</p>
-
-                {post.editedAt && (
-                  <p className="text-sm text-gray-500 mb-4">
-                    Edytowano: {new Date(post.editedAt).toLocaleDateString('pl-PL')}
-                  </p>
-                )}
-
-                {(post.facebookUrl || post.instagramUrl || post.tiktokUrl) && (
-                  <div className="flex gap-3 mb-6">
-                    {post.facebookUrl && (
-                      <motion.a
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        href={post.facebookUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors"
-                      >
-                        <FaFacebook size={20} />
-                        <span className="text-sm font-medium">Facebook</span>
-                      </motion.a>
                     )}
-                    {post.instagramUrl && (
-                      <motion.a
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        href={post.instagramUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-colors"
-                      >
-                        <FaInstagram size={20} />
-                        <span className="text-sm font-medium">Instagram</span>
-                      </motion.a>
-                    )}
-                    {post.tiktokUrl && (
-                      <motion.a
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        href={post.tiktokUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-2 px-4 py-2 bg-black rounded-lg hover:bg-gray-900 transition-colors border border-white"
-                      >
-                        <FaTiktok size={18} />
-                        <span className="text-sm font-medium">TikTok</span>
-                      </motion.a>
-                    )}
+                  </motion.div>
+                </AnimatePresence>
+
+                {allMedia.length > 1 && (
+                  <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 p-3 glass rounded-3xl border-white/15 z-20 overflow-x-auto max-w-[90%] scrollbar-hide">
+                    {allMedia.map((media, idx) => (
+                      <button key={idx} onClick={() => setCurrentMediaIndex(idx)} className={`w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border-2 transition-all shrink-0 touch-manipulation ${currentMediaIndex === idx ? 'border-primary-500 scale-105 shadow-[0_0_15px_rgba(168,85,247,0.8)]' : 'border-transparent opacity-50 hover:opacity-100'}`}>
+                        {media.type === 'video' ? <video src={media.url} className="w-full h-full object-cover" /> : <img src={media.url} className="w-full h-full object-cover" />}
+                      </button>
+                    ))}
                   </div>
                 )}
+              </div>
 
-                <div className="border-t border-purple-500/30 pt-6 mt-auto">
-                  <CommentSection postId={post.id} />
+              {/* HORIZONTAL VOTING PANEL */}
+              <div className="flex items-center gap-6 sm:gap-8 px-4 sm:px-8 py-2">
+                <div className="flex items-center gap-4">
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => handleVote('UPVOTE')}
+                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center transition-all touch-manipulation ${userVote === 'UPVOTE'
+                        ? 'bg-emerald-500 text-white shadow-[0_0_30px_rgba(16,185,129,0.7)] scale-110'
+                        : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10'
+                      }`}
+                  >
+                    <FaArrowUp size={20} />
+                  </motion.button>
+
+                  <div className="flex flex-col items-center min-w-[60px]">
+                    <span className={`text-2xl sm:text-3xl font-black italic tracking-tighter ${upvotes - downvotes >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                      {upvotes - downvotes}
+                    </span>
+                    <span className="text-[7px] sm:text-[8px] text-gray-400 font-black uppercase tracking-widest">Sygnał</span>
+                  </div>
+
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => handleVote('DOWNVOTE')}
+                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center transition-all touch-manipulation ${userVote === 'DOWNVOTE'
+                        ? 'bg-red-500 text-white shadow-[0_0_30px_rgba(239,68,68,0.7)] scale-110'
+                        : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/10'
+                      }`}
+                  >
+                    <FaArrowDown size={20} />
+                  </motion.button>
+                </div>
+
+                <div className="h-8 w-px bg-white/10 mx-2" />
+
+                <div className="flex items-center gap-3 text-gray-400">
+                  <FaComments size={18} className="text-primary-400" />
+                  <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">Sekcja Opinii</span>
                 </div>
               </div>
             </div>
-            )}
+
+            {/* Right Column: Info */}
+            <div className="lg:w-[40%] space-y-8 sm:space-y-10">
+              <div className="space-y-6 sm:space-y-8">
+                <div className="flex items-center gap-5">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl relative shrink-0">
+                    {post.isAnonymous ? (
+                      <div className="w-full h-full bg-white/5 flex items-center justify-center text-gray-300 rounded-2xl border border-white/15"><FaUserSecret size={26} /></div>
+                    ) : (
+                      <img src={post.user.image || ''} className="w-full h-full object-cover rounded-2xl border-2 border-primary-500/50 shadow-md" alt="" />
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-lg sm:text-xl font-black text-white uppercase italic leading-none mb-2">{post.isAnonymous ? 'Ghost Post' : post.user.name}</h3>
+                    <span className="text-[10px] text-gray-400 font-black uppercase tracking-widest flex items-center gap-2"><FaCalendarAlt className="text-primary-400" /> {new Date(post.createdAt).toLocaleDateString('pl-PL')}</span>
+                  </div>
+                </div>
+
+                <h1 className="text-4xl sm:text-5xl lg:text-7xl font-black text-white tracking-tighter uppercase italic leading-[0.9]">{post.title}</h1>
+                <p className="text-gray-300 text-base sm:text-lg leading-relaxed font-medium whitespace-pre-wrap italic border-l-2 border-primary-500/40 pl-6 sm:pl-8">{post.description}</p>
+              </div>
+
+              {/* Discussion */}
+              <div className="pt-10 border-t border-white/10 space-y-8">
+                <div className="flex items-center gap-4">
+                  <div className="w-1.5 h-6 bg-gradient-to-b from-primary-400 to-purple-600 rounded-full" />
+                  <h3 className="text-[11px] text-white font-black uppercase tracking-[0.4em]">Sekcja Komentarzy</h3>
+                </div>
+                <CommentSection postId={post.id} />
+              </div>
+            </div>
+
           </div>
-        </motion.div>
+        </div>
       </motion.div>
-    </AnimatePresence>
-    </>
+    </div>,
+    document.body
   );
 }

@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { FaThumbtack, FaCalendarAlt, FaIdCard } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaThumbtack, FaCalendarAlt, FaChevronDown, FaHistory, FaRocket } from 'react-icons/fa';
 
 interface Update {
   id: string;
@@ -36,8 +37,12 @@ export default function UpdatesList() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="text-xl text-gray-400">Ładowanie aktualizacji...</div>
+      <div className="flex justify-center py-20">
+        <motion.div
+          animate={{ rotate: 360, scale: [1, 1.2, 1] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+          className="w-10 h-10 border-2 border-primary-500 border-t-transparent rounded-full"
+        />
       </div>
     );
   }
@@ -46,100 +51,114 @@ export default function UpdatesList() {
   const regularUpdates = updates.filter(u => !u.isPinned);
 
   return (
-    <div>
+    <div className="space-y-12">
+      {/* Pinned Section */}
       {pinnedUpdates.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <FaThumbtack className="text-yellow-500" />
-            Przypięte Aktualizacje
-          </h2>
-          <div className="space-y-4">
-            {pinnedUpdates.map((update) => (
-              <UpdateCard key={update.id} update={update} isPinned />
+        <section>
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+              <FaThumbtack size={20} />
+            </div>
+            <div>
+              <h2 className="text-2xl font-black text-white">Ważne aktualizacje</h2>
+              <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Najistotniejsze zmiany</p>
+            </div>
+          </div>
+          <div className="space-y-6">
+            {pinnedUpdates.map((update, index) => (
+              <UpdateCard key={update.id} update={update} isPinned index={index} />
             ))}
           </div>
-        </div>
+        </section>
       )}
 
-      {regularUpdates.length > 0 && (
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Wszystkie Aktualizacje</h2>
-          <div className="space-y-4">
-            {regularUpdates.map((update) => (
-              <UpdateCard key={update.id} update={update} />
-            ))}
+      {/* Regular Section */}
+      <section>
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-12 h-12 rounded-2xl bg-primary-500/10 flex items-center justify-center text-primary-400">
+            <FaHistory size={20} />
+          </div>
+          <div>
+            <h2 className="text-2xl font-black text-white">Pełna historia</h2>
+            <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Ewolucja platformy Szoniska</p>
           </div>
         </div>
-      )}
-
-      {updates.length === 0 && (
-        <div className="text-center py-12 text-gray-400">
-          Brak aktualizacji do wyświetlenia.
+        <div className="space-y-6">
+          {regularUpdates.length > 0 ? (
+            regularUpdates.map((update, index) => (
+              <UpdateCard key={update.id} update={update} index={index} />
+            ))
+          ) : pinnedUpdates.length === 0 && (
+            <div className="p-16 glass rounded-[2.5rem] border-dashed border-white/10 text-center">
+              <FaRocket className="text-gray-700 mx-auto mb-4" size={32} />
+              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Brak dostępnych aktualizacji</p>
+            </div>
+          )}
         </div>
-      )}
+      </section>
     </div>
   );
 }
 
-function UpdateCard({ update, isPinned = false }: { update: Update; isPinned?: boolean }) {
+function UpdateCard({ update, isPinned = false, index }: { update: Update; isPinned?: boolean; index: number }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div
-      className={`bg-gray-800 rounded-lg p-6 border-2 ${
-        isPinned ? 'border-yellow-600' : 'border-transparent'
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.1 }}
+      className={`glass rounded-[2rem] p-8 border-white/5 relative overflow-hidden group transition-all ${
+        isPinned ? 'bg-amber-500/[0.03] border-amber-500/20 shadow-[0_0_40px_rgba(245,158,11,0.05)]' : 'hover:bg-white/[0.02]'
       }`}
     >
-      <div className="flex justify-between items-start mb-3">
-        <div>
-          <div className="flex items-center gap-3 mb-2">
-            <span className="px-3 py-1 bg-blue-600 text-sm font-mono rounded">
-              v{update.version}
+      <div className="flex flex-col md:flex-row md:items-start gap-8">
+        <div className="shrink-0 flex flex-col items-center gap-3">
+          <div className="w-16 h-16 rounded-2xl bg-black/20 flex items-center justify-center border border-white/10 group-hover:border-primary-500/50 transition-colors">
+            <span className="font-mono text-primary-400 font-black text-xs">
+              {update.version}
             </span>
-            {isPinned && (
-              <span className="px-2 py-1 bg-yellow-600 text-xs rounded flex items-center gap-1">
-                <FaThumbtack className="text-xs" />
-                Przypięte
-              </span>
-            )}
           </div>
-          <h3 className="text-xl font-semibold">{update.title}</h3>
+          {isPinned && (
+            <div className="flex items-center gap-1 text-[8px] font-black uppercase tracking-widest text-amber-500 bg-amber-500/10 px-2 py-1 rounded-full border border-amber-500/20">
+              <FaThumbtack size={8} /> Priorytet
+            </div>
+          )}
+        </div>
+
+        <div className="flex-1">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+            <h3 className="text-2xl font-black text-white group-hover:text-primary-400 transition-colors">{update.title}</h3>
+            <div className="flex items-center gap-2 text-[10px] text-gray-500 font-black uppercase tracking-widest">
+              <FaCalendarAlt className="text-primary-500" />
+              {new Date(update.createdAt).toLocaleDateString('pl-PL', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+              })}
+            </div>
+          </div>
+
+          <div className={`text-gray-400 font-medium leading-relaxed prose prose-invert prose-sm max-w-none ${!isExpanded && 'line-clamp-4'}`}>
+            {update.content.split('\n').map((line, i) => (
+              <p key={i} className="mb-2">
+                {line}
+              </p>
+            ))}
+          </div>
+
+          {update.content.length > 250 && (
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="mt-6 flex items-center gap-2 text-primary-400 hover:text-white text-[10px] font-black uppercase tracking-widest transition-colors"
+            >
+              {isExpanded ? 'Zwiń treść' : 'Czytaj więcej'}
+              <FaChevronDown className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+            </button>
+          )}
         </div>
       </div>
-
-      <div className={`text-gray-300 mb-4 ${!isExpanded && 'line-clamp-3'}`}>
-        {update.content.split('\n').map((line, i) => (
-          <p key={i} className="mb-2">
-            {line}
-          </p>
-        ))}
-      </div>
-
-      {update.content.length > 200 && (
-        <button
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="text-blue-400 hover:text-blue-300 text-sm mb-4"
-        >
-          {isExpanded ? 'Pokaż mniej' : 'Pokaż więcej'}
-        </button>
-      )}
-
-      <div className="flex items-center gap-4 text-sm text-gray-400 border-t border-gray-700 pt-3">
-        <span className="flex items-center gap-2">
-          <FaCalendarAlt className="text-purple-400" />
-          {new Date(update.createdAt).toLocaleDateString('pl-PL', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          })}
-        </span>
-        <span className="flex items-center gap-2">
-          <FaIdCard className="text-blue-400" />
-          {update.id}
-        </span>
-      </div>
-    </div>
+    </motion.div>
   );
 }
+

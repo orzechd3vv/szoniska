@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaTools, FaPlus, FaTrash, FaClock, FaCheckCircle, FaBullhorn, FaInfoCircle, FaExclamationTriangle, FaExclamationCircle, FaCheckSquare } from 'react-icons/fa';
+import { FaTools, FaPlus, FaTrash, FaClock, FaCheckCircle, FaBullhorn, FaInfoCircle, FaExclamationTriangle, FaExclamationCircle, FaCheckSquare, FaChevronDown, FaCalendarAlt } from 'react-icons/fa';
 
 interface Maintenance {
   id: string;
@@ -42,7 +42,6 @@ export default function TechnicalManagement() {
   useEffect(() => {
     fetchMaintenances();
     fetchAnnouncement();
-    // Check every minute for expired maintenances
     const interval = setInterval(fetchMaintenances, 60000);
     return () => clearInterval(interval);
   }, []);
@@ -172,377 +171,265 @@ export default function TechnicalManagement() {
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
 
-    if (hours > 0) {
-      return `${hours}h ${minutes}m`;
-    }
+    if (hours > 0) return `${hours}h ${minutes}m`;
     return `${minutes}m`;
   };
 
-  const getTypeLabel = (type: string) => {
-    switch (type) {
-      case 'profile':
-        return 'Profile użytkowników';
-      default:
-        return type;
-    }
-  };
-
-  const getAnnouncementIcon = (type: string) => {
-    switch (type) {
-      case 'info':
-        return <FaInfoCircle className="text-blue-400" />;
-      case 'warning':
-        return <FaExclamationTriangle className="text-yellow-400" />;
-      case 'error':
-        return <FaExclamationCircle className="text-red-400" />;
-      case 'success':
-        return <FaCheckSquare className="text-green-400" />;
-      default:
-        return <FaInfoCircle className="text-blue-400" />;
-    }
-  };
-
-  const getAnnouncementStyle = (type: string) => {
-    switch (type) {
-      case 'info':
-        return 'from-blue-900/20 to-blue-800/10 border-blue-500/30';
-      case 'warning':
-        return 'from-yellow-900/20 to-yellow-800/10 border-yellow-500/30';
-      case 'error':
-        return 'from-red-900/20 to-red-800/10 border-red-500/30';
-      case 'success':
-        return 'from-green-900/20 to-green-800/10 border-green-500/30';
-      default:
-        return 'from-blue-900/20 to-blue-800/10 border-blue-500/30';
-    }
+  const getAnnouncementConfig = (type: string) => {
+    const configs = {
+      info: { styles: 'bg-blue-500/10 border-blue-500/20 text-blue-400', icon: FaInfoCircle },
+      warning: { styles: 'bg-amber-500/10 border-amber-500/20 text-amber-400', icon: FaExclamationTriangle },
+      error: { styles: 'bg-red-500/10 border-red-500/20 text-red-400', icon: FaExclamationCircle },
+      success: { styles: 'bg-green-500/10 border-green-500/20 text-green-400', icon: FaCheckSquare },
+    };
+    return (configs as any)[type] || configs.info;
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center py-12">
+      <div className="flex justify-center py-20">
         <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full"
+          animate={{ rotate: 360, scale: [1, 1.2, 1] }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: 'easeInOut' }}
+          className="w-10 h-10 border-2 border-primary-500 border-t-transparent rounded-full"
         />
       </div>
     );
   }
 
   return (
-    <div>
+    <div className="space-y-12">
       {/* Announcement Section */}
-      <div className="mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-2xl font-bold text-white mb-2 flex items-center gap-2">
-              <FaBullhorn className="text-purple-400" />
-              Ogłoszenie globalne
-            </h2>
-            <p className="text-gray-400">Wyświetlane na górze strony głównej dla wszystkich użytkowników</p>
+      <section>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-primary-500/10 flex items-center justify-center text-primary-400">
+              <FaBullhorn size={20} />
+            </div>
+            <div>
+              <h2 className="text-2xl font-black text-white">System ogłoszeń</h2>
+              <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Komunikaty dla wszystkich</p>
+            </div>
           </div>
           {!announcement && (
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
               onClick={() => setShowAnnouncementForm(!showAnnouncementForm)}
-              className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors flex items-center gap-2"
+              className="btn-primary py-3 px-6 flex items-center gap-2 text-sm"
             >
-              <FaPlus />
-              Dodaj ogłoszenie
+              <FaPlus /> Dodaj ogłoszenie
             </motion.button>
           )}
         </div>
 
-        {/* Announcement Form */}
         <AnimatePresence>
           {showAnnouncementForm && (
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="mb-6 overflow-hidden"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="glass rounded-[2rem] p-8 border-white/5 mb-8"
             >
-              <form onSubmit={handleAddAnnouncement} className="bg-gray-800/30 rounded-lg p-6 border border-purple-500/20">
-                <h3 className="text-lg font-semibold text-white mb-4">Nowe ogłoszenie</h3>
-                
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
-                    Typ ogłoszenia
-                  </label>
-                  <select
-                    value={announcementData.type}
-                    onChange={(e) => setAnnouncementData({ ...announcementData, type: e.target.value })}
-                    className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg border border-purple-500/30 focus:border-purple-500 focus:outline-none"
-                  >
-                    <option value="info">Informacja (niebieski)</option>
-                    <option value="warning">Ostrzeżenie (żółty)</option>
-                    <option value="error">Błąd (czerwony)</option>
-                    <option value="success">Sukces (zielony)</option>
-                  </select>
+              <form onSubmit={handleAddAnnouncement} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2 md:col-span-1">
+                    <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">Typ komunikatu</label>
+                    <select
+                      value={announcementData.type}
+                      onChange={(e) => setAnnouncementData({ ...announcementData, type: e.target.value })}
+                      className="input-field w-full appearance-none cursor-pointer"
+                    >
+                      <option value="info">Informacyjny</option>
+                      <option value="warning">Ostrzeżenie</option>
+                      <option value="error">Błąd systemowy</option>
+                      <option value="success">Sukces</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">Treść ogłoszenia</label>
+                    <input
+                      type="text"
+                      value={announcementData.message}
+                      onChange={(e) => setAnnouncementData({ ...announcementData, message: e.target.value })}
+                      placeholder="np. Przerwa techniczna o 22:00..."
+                      className="input-field w-full"
+                      required
+                    />
+                  </div>
                 </div>
-
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
-                    Treść ogłoszenia
-                  </label>
-                  <textarea
-                    value={announcementData.message}
-                    onChange={(e) => setAnnouncementData({ ...announcementData, message: e.target.value })}
-                    placeholder="np. Witamy na nowej wersji strony! 🎉"
-                    rows={3}
-                    required
-                    className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg border border-purple-500/30 focus:border-purple-500 focus:outline-none resize-none"
-                  />
-                </div>
-
-                <div className="flex gap-3">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    type="submit"
-                    disabled={processing}
-                    className="px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 text-white font-semibold rounded-lg transition-colors"
-                  >
-                    {processing ? 'Dodawanie...' : 'Dodaj'}
-                  </motion.button>
-                  <button
-                    type="button"
-                    onClick={() => setShowAnnouncementForm(false)}
-                    className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
-                  >
-                    Anuluj
-                  </button>
+                <div className="flex justify-end gap-3">
+                  <button type="button" onClick={() => setShowAnnouncementForm(false)} className="px-6 py-2 text-gray-500 font-bold hover:text-white transition-colors">Anuluj</button>
+                  <button type="submit" disabled={processing} className="btn-primary py-2 px-8">Opublikuj</button>
                 </div>
               </form>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Current Announcement */}
-        {announcement && (
+        {announcement ? (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className={`bg-gradient-to-br rounded-lg p-6 border-2 ${getAnnouncementStyle(announcement.type)}`}
+            className={`glass-dark rounded-[2.5rem] p-8 border-2 ${getAnnouncementConfig(announcement.type).styles} relative overflow-hidden`}
           >
-            <div className="flex items-start justify-between">
-              <div className="flex items-start gap-3 flex-1">
-                <div className="p-2 bg-black/30 rounded-lg mt-1">
-                  {getAnnouncementIcon(announcement.type)}
-                </div>
-                <div className="flex-1">
-                  <p className="text-white text-lg">{announcement.message}</p>
-                  <p className="text-gray-500 text-sm mt-2">
-                    Utworzono: {new Date(announcement.createdAt).toLocaleString('pl-PL')}
-                  </p>
-                </div>
+            <div className="flex items-center gap-6 relative z-10">
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center bg-black/20 ${getAnnouncementConfig(announcement.type).text}`}>
+                {getAnnouncementConfig(announcement.type).icon({ size: 32 })}
+              </div>
+              <div className="flex-1">
+                <p className="text-white font-bold text-lg leading-tight">{announcement.message}</p>
+                <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest mt-2">
+                  Dodano: {new Date(announcement.createdAt).toLocaleString('pl-PL')}
+                </p>
               </div>
               <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+                whileHover={{ scale: 1.1, backgroundColor: 'rgba(239, 68, 68, 0.2)' }}
+                whileTap={{ scale: 0.9 }}
                 onClick={handleDeleteAnnouncement}
-                disabled={processing}
-                className="ml-4 p-3 bg-red-600/20 hover:bg-red-600/30 rounded-lg transition-colors"
+                className="w-12 h-12 glass rounded-2xl flex items-center justify-center text-red-500"
               >
-                <FaTrash className="text-red-400" />
+                <FaTrash />
               </motion.button>
             </div>
           </motion.div>
-        )}
-
-        {!announcement && !showAnnouncementForm && (
-          <div className="bg-gray-800/30 rounded-lg p-8 border border-purple-500/20 text-center">
-            <FaBullhorn className="text-gray-600 text-4xl mx-auto mb-3" />
-            <p className="text-gray-500">Brak aktywnego ogłoszenia</p>
+        ) : !showAnnouncementForm && (
+          <div className="p-12 glass rounded-[2.5rem] border-dashed border-white/10 text-center">
+            <FaBullhorn className="text-gray-700 mx-auto mb-4" size={32} />
+            <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Brak aktywnych ogłoszeń</p>
           </div>
         )}
-      </div>
+      </section>
 
       {/* Maintenance Section */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-bold text-white mb-2">Zarządzanie techniczne</h2>
-          <p className="text-gray-400">Tymczasowo wyłącz funkcje strony z określonym powodem i czasem</p>
-        </div>
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={() => setShowAddForm(!showAddForm)}
-          className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors flex items-center gap-2"
-        >
-          <FaPlus />
-          Dodaj utrzymanie
-        </motion.button>
-      </div>
-
-      {/* Add Form */}
-      <AnimatePresence>
-        {showAddForm && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            className="mb-6 overflow-hidden"
-          >
-            <form onSubmit={handleAddMaintenance} className="bg-gray-800/30 rounded-lg p-6 border border-purple-500/20">
-              <h3 className="text-lg font-semibold text-white mb-4">Nowe utrzymanie techniczne</h3>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
-                    Typ funkcji
-                  </label>
-                  <select
-                    value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg border border-purple-500/30 focus:border-purple-500 focus:outline-none"
-                  >
-                    <option value="profile">Profile użytkowników</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-400 mb-2">
-                    Czas trwania (godziny)
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="168"
-                    value={formData.hours}
-                    onChange={(e) => setFormData({ ...formData, hours: parseInt(e.target.value) })}
-                    className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg border border-purple-500/30 focus:border-purple-500 focus:outline-none"
-                  />
-                </div>
-              </div>
-
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-400 mb-2">
-                  Powód wyłączenia
-                </label>
-                <textarea
-                  value={formData.reason}
-                  onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-                  placeholder="np. Prace konserwacyjne na profilach użytkowników..."
-                  rows={3}
-                  required
-                  className="w-full bg-gray-800 text-white px-4 py-3 rounded-lg border border-purple-500/30 focus:border-purple-500 focus:outline-none resize-none"
-                />
-              </div>
-
-              <div className="flex gap-3">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="submit"
-                  disabled={processing}
-                  className="px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 text-white font-semibold rounded-lg transition-colors"
-                >
-                  {processing ? 'Dodawanie...' : 'Dodaj'}
-                </motion.button>
-                <button
-                  type="button"
-                  onClick={() => setShowAddForm(false)}
-                  className="px-6 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors"
-                >
-                  Anuluj
-                </button>
-              </div>
-            </form>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Active Maintenances */}
-      <div className="space-y-4">
-        {maintenances.length === 0 ? (
-          <div className="bg-gray-800/30 rounded-lg p-8 border border-purple-500/20 text-center">
-            <FaTools className="text-gray-600 text-4xl mx-auto mb-3" />
-            <p className="text-gray-500">Brak aktywnych utrzymań technicznych</p>
+      <section>
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500">
+              <FaTools size={20} />
+            </div>
+            <div>
+              <h2 className="text-2xl font-black text-white">Zarządzanie usługami</h2>
+              <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mt-1">Przerwy techniczne</p>
+            </div>
           </div>
-        ) : (
-          maintenances.map((maintenance) => {
-            const isExpired = new Date(maintenance.endTime) <= new Date();
-            const timeRemaining = getTimeRemaining(maintenance.endTime);
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setShowAddForm(!showAddForm)}
+            className="btn-primary py-3 px-6 flex items-center gap-2 text-sm bg-amber-600 hover:bg-amber-500 shadow-amber-600/20"
+          >
+            <FaPlus /> Zaplanuj przerwę
+          </motion.button>
+        </div>
 
-            return (
-              <motion.div
-                key={maintenance.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`bg-gradient-to-br rounded-lg p-6 border-2 ${
-                  isExpired
-                    ? 'from-gray-800/30 to-gray-900/30 border-gray-600/30'
-                    : 'from-orange-900/20 to-orange-800/10 border-orange-500/30'
-                }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className={`p-2 rounded-lg ${
-                        isExpired ? 'bg-gray-700/50' : 'bg-orange-600/20'
-                      }`}>
-                        {isExpired ? (
-                          <FaCheckCircle className="text-gray-400" size={20} />
-                        ) : (
-                          <FaTools className="text-orange-400" size={20} />
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-semibold text-white">
-                          {getTypeLabel(maintenance.type)}
-                        </h3>
-                        <p className={`text-sm ${isExpired ? 'text-gray-500' : 'text-orange-300'}`}>
-                          {isExpired ? 'Zakończone' : 'Aktywne'}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="bg-black/30 rounded-lg p-4 mb-3">
-                      <p className="text-gray-300">{maintenance.reason}</p>
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                      <div>
-                        <p className="text-gray-500">Rozpoczęto</p>
-                        <p className="text-white font-medium">
-                          {new Date(maintenance.startTime).toLocaleString('pl-PL')}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500">Zakończenie</p>
-                        <p className="text-white font-medium">
-                          {new Date(maintenance.endTime).toLocaleString('pl-PL')}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500">Pozostało</p>
-                        <p className={`font-medium ${
-                          isExpired ? 'text-gray-500' : 'text-orange-400'
-                        }`}>
-                          <FaClock className="inline mr-1" />
-                          {timeRemaining}
-                        </p>
-                      </div>
+        <AnimatePresence>
+          {showAddForm && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="glass rounded-[2rem] p-8 border-white/5 mb-8"
+            >
+              <form onSubmit={handleAddMaintenance} className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">Moduł do wyłączenia</label>
+                    <select
+                      value={formData.type}
+                      onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                      className="input-field w-full cursor-pointer"
+                    >
+                      <option value="profile">Profile użytkowników</option>
+                      <option value="chat">Chat globalny</option>
+                      <option value="all">Cała platforma</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">Czas trwania</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={formData.hours}
+                        onChange={(e) => setFormData({ ...formData, hours: parseInt(e.target.value) })}
+                        className="input-field w-full pr-12"
+                        min="1"
+                      />
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 text-[10px] font-black uppercase">godz.</span>
                     </div>
                   </div>
-
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => handleDeleteMaintenance(maintenance.id)}
-                    disabled={processing}
-                    className="ml-4 p-3 bg-red-600/20 hover:bg-red-600/30 rounded-lg transition-colors"
-                  >
-                    <FaTrash className="text-red-400" />
-                  </motion.button>
+                  <div className="space-y-2">
+                    <label className="text-[10px] text-gray-500 font-black uppercase tracking-widest ml-1">Powód</label>
+                    <input
+                      type="text"
+                      value={formData.reason}
+                      onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
+                      className="input-field w-full"
+                      placeholder="np. Aktualizacja bazy danych..."
+                      required
+                    />
+                  </div>
                 </div>
-              </motion.div>
-            );
-          })
-        )}
-      </div>
+                <div className="flex justify-end gap-3">
+                  <button type="button" onClick={() => setShowAddForm(false)} className="px-6 py-2 text-gray-500 font-bold hover:text-white transition-colors">Anuluj</button>
+                  <button type="submit" disabled={processing} className="btn-primary py-2 px-8 bg-amber-600 hover:bg-amber-500 shadow-amber-600/20">Uruchom</button>
+                </div>
+              </form>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className="grid grid-cols-1 gap-6">
+          {maintenances.length === 0 ? (
+            <div className="p-12 glass rounded-[2.5rem] border-dashed border-white/10 text-center">
+              <FaTools className="text-gray-700 mx-auto mb-4" size={32} />
+              <p className="text-gray-500 font-bold uppercase tracking-widest text-xs">Brak aktywnych przerw</p>
+            </div>
+          ) : (
+            maintenances.map((m) => {
+              const isExpired = new Date(m.endTime) <= new Date();
+              return (
+                <motion.div
+                  key={m.id}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  className={`glass rounded-[2rem] p-6 border-white/5 relative overflow-hidden group ${isExpired ? 'opacity-50 grayscale' : ''}`}
+                >
+                  <div className="flex flex-col md:flex-row gap-6 items-center">
+                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shrink-0 ${isExpired ? 'bg-gray-800' : 'bg-amber-500/10 text-amber-500'}`}>
+                      {isExpired ? <FaCheckCircle size={24} /> : <FaTools size={24} className="animate-spin-slow" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h4 className="text-white font-black uppercase text-xs tracking-widest">{m.type === 'profile' ? 'Profile użytkowników' : m.type}</h4>
+                        {!isExpired && <span className="px-2 py-0.5 bg-green-500/10 text-green-500 text-[8px] font-black uppercase tracking-widest rounded">Aktywne</span>}
+                      </div>
+                      <p className="text-gray-400 font-bold text-lg mb-4 truncate">{m.reason}</p>
+                      <div className="flex flex-wrap gap-6">
+                        <div className="flex items-center gap-2 text-[10px] text-gray-500 font-bold uppercase">
+                          <FaClock className="text-primary-500" /> Pozostało: {getTimeRemaining(m.endTime)}
+                        </div>
+                        <div className="flex items-center gap-2 text-[10px] text-gray-500 font-bold uppercase">
+                          <FaCalendarAlt className="text-primary-500" /> Koniec: {new Date(m.endTime).toLocaleString('pl-PL')}
+                        </div>
+                      </div>
+                    </div>
+                    <motion.button
+                      whileHover={{ scale: 1.1, backgroundColor: 'rgba(239, 68, 68, 0.2)' }}
+                      whileTap={{ scale: 0.9 }}
+                      onClick={() => handleDeleteMaintenance(m.id)}
+                      className="w-12 h-12 glass rounded-2xl flex items-center justify-center text-red-500 border-white/5"
+                    >
+                      <FaTrash size={16} />
+                    </motion.button>
+                  </div>
+                </motion.div>
+              )
+            })
+          )}
+        </div>
+      </section>
     </div>
   );
 }
+

@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { FaLock, FaShieldAlt, FaQrcode, FaCheckCircle, FaTimesCircle, FaCopy } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaLock, FaShieldAlt, FaQrcode, FaCheckCircle, FaTimesCircle, FaCopy, FaKey, FaChevronRight, FaInfoCircle } from 'react-icons/fa';
 import Image from 'next/image';
 
 export default function SecuritySettings() {
@@ -29,7 +29,6 @@ export default function SecuritySettings() {
   } | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // Pobierz status 2FA przy montowaniu komponentu
   useEffect(() => {
     const fetch2FAStatus = async () => {
       try {
@@ -188,223 +187,269 @@ export default function SecuritySettings() {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Zmiana hasła */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-br from-gray-900 to-black border border-purple-500/30 rounded-xl p-6"
-      >
-        <div className="flex items-center gap-3 mb-6">
-          <FaLock className="text-purple-400 text-2xl" />
-          <h2 className="text-2xl font-bold text-white">Zmiana hasła</h2>
+    <div className="space-y-12">
+      {/* Password Change Section */}
+      <section className="glass rounded-[3rem] p-10 border-white/5 relative overflow-hidden">
+        <div className="flex items-center gap-5 mb-10 relative z-10">
+          <div className="w-14 h-14 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-400 border border-blue-500/20">
+            <FaLock size={24} />
+          </div>
+          <div>
+            <h2 className="text-3xl font-black text-white tracking-tighter uppercase italic">Autoryzacja</h2>
+            <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] mt-1">Zmiana klucza dostępu do Twojego profilu</p>
+          </div>
         </div>
 
-        <form onSubmit={handleChangePassword} className="space-y-4">
-          <div>
-            <label className="block text-gray-300 text-sm font-semibold mb-2">
-              Aktualne hasło
-            </label>
+        <form onSubmit={handleChangePassword} className="space-y-8 max-w-2xl relative z-10">
+          <div className="space-y-3">
+            <label className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] ml-2">Obecne hasło</label>
             <input
               type="password"
               value={changePasswordForm.currentPassword}
-              onChange={(e) =>
-                setChangePasswordForm({ ...changePasswordForm, currentPassword: e.target.value })
-              }
-              className="w-full bg-gray-800 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              placeholder="Wprowadź aktualne hasło"
+              onChange={(e) => setChangePasswordForm({ ...changePasswordForm, currentPassword: e.target.value })}
+              className="input-field w-full py-5 px-8 text-sm"
+              placeholder="Wprowadź aktualne hasło dla weryfikacji"
               required
             />
           </div>
 
-          <div>
-            <label className="block text-gray-300 text-sm font-semibold mb-2">Nowe hasło</label>
-            <input
-              type="password"
-              value={changePasswordForm.newPassword}
-              onChange={(e) =>
-                setChangePasswordForm({ ...changePasswordForm, newPassword: e.target.value })
-              }
-              className="w-full bg-gray-800 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              placeholder="Minimum 6 znaków"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-gray-300 text-sm font-semibold mb-2">
-              Potwierdź nowe hasło
-            </label>
-            <input
-              type="password"
-              value={changePasswordForm.confirmPassword}
-              onChange={(e) =>
-                setChangePasswordForm({ ...changePasswordForm, confirmPassword: e.target.value })
-              }
-              className="w-full bg-gray-800 text-white rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              placeholder="Wprowadź ponownie nowe hasło"
-              required
-            />
-          </div>
-
-          {passwordMessage && (
-            <div
-              className={`flex items-center gap-2 p-3 rounded-lg ${
-                passwordMessage.type === 'success'
-                  ? 'bg-green-500/10 border border-green-500/50 text-green-400'
-                  : 'bg-red-500/10 border border-red-500/50 text-red-400'
-              }`}
-            >
-              {passwordMessage.type === 'success' ? <FaCheckCircle /> : <FaTimesCircle />}
-              {passwordMessage.text}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-3">
+              <label className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] ml-2">Nowy klucz</label>
+              <input
+                type="password"
+                value={changePasswordForm.newPassword}
+                onChange={(e) => setChangePasswordForm({ ...changePasswordForm, newPassword: e.target.value })}
+                className="input-field w-full py-5 px-8 text-sm"
+                placeholder="Minimum 6 znaków"
+                required
+              />
             </div>
-          )}
+            <div className="space-y-3">
+              <label className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] ml-2">Powtórz klucz</label>
+              <input
+                type="password"
+                value={changePasswordForm.confirmPassword}
+                onChange={(e) => setChangePasswordForm({ ...changePasswordForm, confirmPassword: e.target.value })}
+                className="input-field w-full py-5 px-8 text-sm"
+                placeholder="Zgodne z nowym hasłem"
+                required
+              />
+            </div>
+          </div>
+
+          <AnimatePresence>
+            {passwordMessage && (
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 20 }}
+                className={`p-6 rounded-2xl border flex items-center gap-4 text-[11px] font-black uppercase tracking-wider ${
+                  passwordMessage.type === 'success'
+                    ? 'bg-green-500/5 border-green-500/20 text-green-400'
+                    : 'bg-red-500/5 border-red-500/20 text-red-400'
+                }`}
+              >
+                {passwordMessage.type === 'success' ? <FaCheckCircle size={16} /> : <FaTimesCircle size={16} />}
+                {passwordMessage.text}
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <button
             type="submit"
             disabled={passwordLoading}
-            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-600 text-white font-semibold py-3 rounded-lg transition-all"
+            className="btn-primary w-full md:w-auto py-5 px-12 text-[10px] font-black uppercase tracking-[0.2em] shadow-2xl shadow-primary-600/20"
           >
-            {passwordLoading ? 'Zmieniam...' : 'Zmień hasło'}
+            {passwordLoading ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin mx-auto" />
+            ) : 'Aktualizuj zabezpieczenia'}
           </button>
         </form>
-      </motion.div>
 
-      {/* Weryfikacja dwuetapowa */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="bg-gradient-to-br from-gray-900 to-black border border-purple-500/30 rounded-xl p-6"
-      >
-        <div className="flex items-center gap-3 mb-6">
-          <FaShieldAlt className="text-purple-400 text-2xl" />
-          <h2 className="text-2xl font-bold text-white">Weryfikacja dwuetapowa (2FA)</h2>
+        <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-blue-500/5 rounded-full blur-[100px]" />
+      </section>
+
+      {/* 2FA Section */}
+      <section className="glass rounded-[3rem] p-10 border-white/5 relative overflow-hidden">
+        <div className="flex items-center gap-5 mb-10">
+          <div className="w-14 h-14 rounded-2xl bg-primary-500/10 flex items-center justify-center text-primary-400 border border-primary-500/20">
+            <FaShieldAlt size={24} />
+          </div>
+          <div>
+            <h2 className="text-3xl font-black text-white tracking-tighter uppercase italic">Ochrona 2FA</h2>
+            <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] mt-1">Weryfikacja dwupoziomowa dla maksymalnego bezpieczeństwa</p>
+          </div>
         </div>
 
-        <p className="text-gray-400 mb-6">
-          Zabezpiecz swoje konto dodając dodatkową warstwę ochrony. Użyj aplikacji Google
-          Authenticator lub innej aplikacji TOTP.
-        </p>
+        <div className="max-w-2xl relative z-10">
+          <div className="flex items-start gap-4 mb-10 p-6 glass-dark rounded-3xl border-white/5">
+            <FaInfoCircle className="text-primary-400 shrink-0 mt-1" size={16} />
+            <p className="text-[11px] text-gray-400 font-medium leading-relaxed uppercase tracking-widest opacity-80">
+              Włączenie 2FA wymaga podania unikalnego, generowanego co 30 sekund kodu przy każdym logowaniu. Drastycznie zwiększa to bezpieczeństwo przed nieautoryzowanym dostępem do Twoich danych i postów.
+            </p>
+          </div>
 
-        {!twoFactorEnabled && !showTwoFactorSetup && (
-          <button
-            onClick={handleStartTwoFactorSetup}
-            disabled={twoFactorLoading}
-            className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-600 text-white font-semibold py-3 rounded-lg transition-all flex items-center justify-center gap-2"
-          >
-            <FaQrcode />
-            {twoFactorLoading ? 'Ładowanie...' : 'Włącz weryfikację dwuetapową'}
-          </button>
-        )}
-
-        {showTwoFactorSetup && !twoFactorEnabled && (
-          <div className="space-y-4">
-            <div className="bg-white p-4 rounded-lg flex justify-center">
-              <Image src={qrCode} alt="QR Code" width={200} height={200} />
-            </div>
-
-            {/* Klucz konfiguracyjny */}
-            <div className="bg-gray-800/50 border border-purple-500/30 rounded-lg p-4">
-              <p className="text-gray-400 text-xs mb-2 text-center">
-                Lub wprowadź klucz ręcznie:
-              </p>
-              <div className="flex items-center gap-2">
-                <div className="flex-1 bg-gray-900 rounded px-3 py-2 font-mono text-sm text-purple-400 break-all">
-                  {secret}
+          <AnimatePresence mode="wait">
+            {!twoFactorEnabled && !showTwoFactorSetup ? (
+              <motion.button
+                key="enable-btn"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={handleStartTwoFactorSetup}
+                disabled={twoFactorLoading}
+                className="group w-full flex items-center justify-between glass py-8 px-10 rounded-[2.5rem] text-white font-black hover:bg-white/5 transition-all border-white/10 active:scale-[0.98]"
+              >
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 rounded-2xl bg-primary-500/10 flex items-center justify-center text-primary-400 group-hover:scale-110 transition-transform shadow-inner">
+                    <FaQrcode size={28} />
+                  </div>
+                  <div className="text-left">
+                    <span className="block text-sm uppercase tracking-[0.2em] mb-1">Inicjuj procedurę 2FA</span>
+                    <span className="block text-[9px] text-gray-600 font-black uppercase">Zeskanuj kod aby zabezpieczyć konto</span>
+                  </div>
                 </div>
-                <button
-                  onClick={copySecretToClipboard}
-                  className="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded transition-colors flex items-center gap-2 whitespace-nowrap"
-                  title="Skopiuj klucz"
-                >
-                  <FaCopy />
-                  {copied ? 'Skopiowano!' : 'Kopiuj'}
-                </button>
-              </div>
-            </div>
-
-            <p className="text-gray-400 text-sm">
-              Zeskanuj kod QR w aplikacji Google Authenticator, a następnie wprowadź 6-cyfrowy kod
-              weryfikacyjny:
-            </p>
-
-            <input
-              type="text"
-              value={verificationCode}
-              onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              className="w-full bg-gray-800 text-white text-center text-2xl font-bold tracking-widest rounded-lg px-4 py-4 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              placeholder="000000"
-              maxLength={6}
-            />
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowTwoFactorSetup(false);
-                  setVerificationCode('');
-                }}
-                className="flex-1 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 rounded-lg transition-all"
+                <FaChevronRight className="text-gray-700 group-hover:text-primary-400 transition-colors" />
+              </motion.button>
+            ) : showTwoFactorSetup && !twoFactorEnabled ? (
+              <motion.div
+                key="setup-form"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="glass-dark rounded-[3rem] p-10 border-primary-500/20 shadow-2xl space-y-10"
               >
-                Anuluj
-              </button>
-              <button
-                onClick={handleEnable2FA}
-                disabled={twoFactorLoading || verificationCode.length !== 6}
-                className="flex-1 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 disabled:from-gray-600 disabled:to-gray-600 text-white font-semibold py-3 rounded-lg transition-all"
+                <div className="flex flex-col lg:flex-row gap-10 items-center">
+                  <div className="relative group">
+                    <div className="absolute -inset-2 bg-primary-500/20 blur-2xl group-hover:bg-primary-500/40 transition-all duration-700" />
+                    <div className="bg-white p-6 rounded-[2.5rem] relative">
+                      <Image src={qrCode} alt="QR Code" width={180} height={180} className="rounded-xl" />
+                    </div>
+                  </div>
+                  <div className="flex-1 space-y-6">
+                    <h4 className="text-white font-black text-sm uppercase tracking-widest italic">Kroki konfiguracji:</h4>
+                    <div className="space-y-4">
+                      {[
+                        'Otwórz Google Authenticator lub podobną aplikację.',
+                        'Zeskanuj widoczny kod QR telefonem.',
+                        'Lub wprowadź klucz ręcznie w aplikacji:'
+                      ].map((step, i) => (
+                        <div key={i} className="flex items-center gap-3 text-[10px] text-gray-400 font-black uppercase tracking-widest">
+                          <span className="w-5 h-5 rounded-full bg-white/5 flex items-center justify-center text-[9px] text-primary-400 border border-white/5">{i+1}</span>
+                          {step}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="group relative">
+                      <div className="flex items-center gap-3 p-3 bg-black/60 rounded-2xl border border-white/5 group-hover:border-primary-500/30 transition-colors">
+                        <span className="flex-1 font-mono text-[11px] text-primary-400 px-3 truncate tracking-widest uppercase">{secret}</span>
+                        <button onClick={copySecretToClipboard} className="w-10 h-10 flex items-center justify-center bg-white/5 hover:bg-white/10 rounded-xl transition-all text-gray-500 hover:text-white">
+                          {copied ? <FaCheckCircle className="text-green-500" /> : <FaCopy size={14} />}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-6 pt-6 border-t border-white/5">
+                  <label className="text-[10px] text-gray-500 font-black uppercase tracking-[0.3em] block text-center">Wprowadź 6-cyfrowy kod autoryzacji</label>
+                  <div className="relative max-w-sm mx-auto">
+                    <input
+                      type="text"
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      className="w-full bg-black/60 border-2 border-white/10 focus:border-primary-500 rounded-[2rem] py-6 text-center text-4xl font-black text-white tracking-[0.8em] focus:outline-none transition-all placeholder:text-white/5 shadow-inner"
+                      placeholder="000000"
+                      maxLength={6}
+                    />
+                    {verificationCode.length === 6 && (
+                      <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="absolute -right-4 -top-4 w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-green-500/20">
+                        <FaCheckCircle size={18} />
+                      </motion.div>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-6 pt-4">
+                    <button onClick={() => setShowTwoFactorSetup(false)} className="glass py-5 rounded-[1.5rem] font-black text-[10px] text-gray-600 hover:text-white uppercase tracking-[0.2em] transition-all">Poniechaj</button>
+                    <button 
+                      onClick={handleEnable2FA} 
+                      disabled={verificationCode.length !== 6 || twoFactorLoading} 
+                      className="btn-primary py-5 rounded-[1.5rem] text-[10px] font-black uppercase tracking-[0.2em] disabled:opacity-50"
+                    >
+                      {twoFactorLoading ? 'Aktywacja...' : 'Aktywuj ochronę'}
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ) : twoFactorEnabled ? (
+              <motion.div
+                key="enabled-info"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="space-y-8"
               >
-                {twoFactorLoading ? 'Weryfikowanie...' : 'Potwierdź i włącz'}
-              </button>
-            </div>
-          </div>
-        )}
+                <div className="p-10 bg-green-500/5 border border-green-500/20 rounded-[3rem] flex items-center gap-8 relative overflow-hidden group shadow-2xl">
+                  <div className="absolute -right-10 -top-10 w-40 h-40 bg-green-500/10 rounded-full blur-[80px]" />
+                  <div className="w-20 h-20 rounded-3xl bg-green-500/10 flex items-center justify-center text-green-500 shadow-[0_0_40px_rgba(34,197,94,0.1)] group-hover:rotate-6 transition-transform">
+                    <FaShieldAlt size={40} />
+                  </div>
+                  <div>
+                    <h4 className="text-white font-black text-2xl uppercase tracking-tighter mb-1 italic">Status: Secure</h4>
+                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] opacity-80">Twoje konto jest pod pełną ochroną 2FA.</p>
+                  </div>
+                </div>
 
-        {twoFactorEnabled && (
-          <div className="space-y-4">
-            <div className="bg-green-500/10 border border-green-500/50 text-green-400 p-4 rounded-lg flex items-center gap-3">
-              <FaCheckCircle className="text-2xl" />
-              <div>
-                <p className="font-semibold">Weryfikacja dwuetapowa jest włączona</p>
-                <p className="text-sm">Twoje konto jest zabezpieczone</p>
-              </div>
-            </div>
+                <div className="p-10 glass rounded-[3rem] border-red-500/20 bg-red-500/5 space-y-8 relative overflow-hidden">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-white font-black flex items-center gap-3 text-sm uppercase tracking-widest italic">
+                      <FaTimesCircle className="text-red-500" /> Procedura wyłączenia
+                    </h4>
+                  </div>
+                  <p className="text-[10px] text-gray-500 font-black leading-relaxed uppercase tracking-[0.2em] max-w-md opacity-80">
+                    Operacja ta drastycznie obniży odporność Twojego profilu na ataki. Wymaga aktualnego tokena w celu autoryzacji usunięcia ochrony.
+                  </p>
+                  <div className="flex gap-4">
+                    <input
+                      type="text"
+                      value={verificationCode}
+                      onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                      className="flex-1 bg-black/40 border border-white/10 rounded-2xl px-6 py-5 text-center text-2xl font-black text-white tracking-[0.4em] focus:outline-none focus:border-red-500/50 transition-all shadow-inner"
+                      placeholder="TOKEN"
+                      maxLength={6}
+                    />
+                    <button 
+                      onClick={handleDisable2FA} 
+                      disabled={verificationCode.length !== 6 || twoFactorLoading} 
+                      className="bg-red-600 hover:bg-red-700 text-white font-black px-10 rounded-2xl text-[10px] uppercase tracking-[0.2em] transition-all active:scale-95 disabled:opacity-50"
+                    >
+                      Dezaktywuj
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
 
-            <p className="text-gray-400 text-sm">
-              Aby wyłączyć weryfikację dwuetapową, wprowadź kod z aplikacji:
-            </p>
-
-            <input
-              type="text"
-              value={verificationCode}
-              onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              className="w-full bg-gray-800 text-white text-center text-2xl font-bold tracking-widest rounded-lg px-4 py-4 focus:outline-none focus:ring-2 focus:ring-purple-500"
-              placeholder="000000"
-              maxLength={6}
-            />
-
-            <button
-              onClick={handleDisable2FA}
-              disabled={twoFactorLoading || verificationCode.length !== 6}
-              className="w-full bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white font-semibold py-3 rounded-lg transition-all"
+          {twoFactorMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={`mt-8 p-6 rounded-2xl border text-[10px] font-black uppercase tracking-widest flex items-center gap-4 ${
+                twoFactorMessage.type === 'success'
+                  ? 'bg-green-500/5 border-green-500/20 text-green-400'
+                  : 'bg-red-500/5 border-red-500/20 text-red-400'
+              }`}
             >
-              {twoFactorLoading ? 'Wyłączam...' : 'Wyłącz weryfikację dwuetapową'}
-            </button>
-          </div>
-        )}
+              <FaKey className="text-primary-400" />
+              {twoFactorMessage.text}
+            </motion.div>
+          )}
+        </div>
 
-        {twoFactorMessage && (
-          <div
-            className={`mt-4 flex items-center gap-2 p-3 rounded-lg ${
-              twoFactorMessage.type === 'success'
-                ? 'bg-green-500/10 border border-green-500/50 text-green-400'
-                : 'bg-red-500/10 border border-red-500/50 text-red-400'
-            }`}
-          >
-            {twoFactorMessage.type === 'success' ? <FaCheckCircle /> : <FaTimesCircle />}
-            {twoFactorMessage.text}
-          </div>
-        )}
-      </motion.div>
+        <div className="absolute -top-20 -left-20 w-80 h-80 bg-primary-500/5 rounded-full blur-[120px]" />
+      </section>
     </div>
   );
 }
+
+

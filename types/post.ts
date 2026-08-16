@@ -1,5 +1,6 @@
 export interface Post {
   id: string;
+  userId: string;
   title: string;
   description: string;
   images: string[];
@@ -17,13 +18,21 @@ export interface Post {
     id?: string;
     name: string;
     image?: string;
-    discordId?: string;
   };
   warnings?: Array<{
     id: string;
     message: string;
     createdAt: string;
   }>;
+  views?: number;
+  comments?: any[];
+  upvotes?: number;
+  downvotes?: number;
+  userVote?: 'UPVOTE' | 'DOWNVOTE' | null;
+  _count?: { 
+    comments: number;
+    votes?: number;
+  };
 }
 
 export interface Comment {

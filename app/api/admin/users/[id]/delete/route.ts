@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { isUserAdmin } from '@/lib/adminAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,10 +22,7 @@ export async function DELETE(
       where: { id: session.user.id },
     });
 
-    const isAdmin = user && (
-      user.email === 'orzech363@gmail.com' ||
-      user.discordId === '1144910054001225779'
-    );
+    const isAdmin = user && isUserAdmin(user);
 
     if (!isAdmin) {
       return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403 });

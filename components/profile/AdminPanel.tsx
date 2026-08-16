@@ -1,83 +1,63 @@
 'use client';
 
 import { useState } from 'react';
-import { FaUsers, FaCheckCircle, FaComments, FaBullhorn, FaTools } from 'react-icons/fa';
+import { FaUsers, FaCheckCircle, FaComments, FaBullhorn, FaTools, FaChevronRight } from 'react-icons/fa';
 import VerificationPanel from './VerificationPanel';
 import UsersManagementNew from './UsersManagementNew';
 import ChatManagement from '../admin/ChatManagement';
 import UpdatesManagement from './UpdatesManagement';
 import TechnicalManagement from './TechnicalManagement';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function AdminPanel() {
   const [activeTab, setActiveTab] = useState<'verification' | 'users' | 'chat' | 'updates' | 'technical'>('verification');
 
+  const tabs = [
+    { id: 'verification', label: 'Weryfikacja', icon: FaCheckCircle, color: 'text-green-400' },
+    { id: 'users', label: 'Użytkownicy', icon: FaUsers, color: 'text-blue-400' },
+    { id: 'chat', label: 'Chat', icon: FaComments, color: 'text-purple-400' },
+    { id: 'updates', label: 'Aktualizacje', icon: FaBullhorn, color: 'text-amber-400' },
+    { id: 'technical', label: 'Ustawienia', icon: FaTools, color: 'text-red-400' },
+  ];
+
   return (
-    <div>
-      <div className="overflow-x-auto mb-6">
-        <div className="flex gap-4 min-w-max">
+    <div className="space-y-8">
+      {/* Admin Tabs */}
+      <div className="flex flex-wrap gap-3 p-2 glass rounded-3xl border-white/5">
+        {tabs.map((tab) => (
           <button
-            onClick={() => setActiveTab('verification')}
-            className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-lg font-semibold transition-all whitespace-nowrap ${
-              activeTab === 'verification'
-                ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/50'
-                : 'bg-gray-800/50 text-gray-400 hover:text-white'
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`flex items-center gap-3 px-6 py-3 rounded-2xl font-bold text-sm transition-all ${
+              activeTab === tab.id
+                ? 'bg-white/10 text-white shadow-inner'
+                : 'text-gray-500 hover:text-white hover:bg-white/5'
             }`}
           >
-            <FaCheckCircle size={20} />
-            Weryfikowanie
+            <tab.icon className={activeTab === tab.id ? tab.color : 'text-gray-600'} />
+            {tab.label}
           </button>
-          <button
-            onClick={() => setActiveTab('users')}
-            className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-lg font-semibold transition-all whitespace-nowrap ${
-              activeTab === 'users'
-                ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/50'
-                : 'bg-gray-800/50 text-gray-400 hover:text-white'
-            }`}
-          >
-            <FaUsers size={20} />
-            Użytkownicy
-          </button>
-          <button
-            onClick={() => setActiveTab('chat')}
-            className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-lg font-semibold transition-all whitespace-nowrap ${
-              activeTab === 'chat'
-                ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/50'
-                : 'bg-gray-800/50 text-gray-400 hover:text-white'
-            }`}
-          >
-            <FaComments size={20} />
-            Chat
-          </button>
-          <button
-            onClick={() => setActiveTab('updates')}
-            className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-lg font-semibold transition-all whitespace-nowrap ${
-              activeTab === 'updates'
-                ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/50'
-                : 'bg-gray-800/50 text-gray-400 hover:text-white'
-            }`}
-          >
-            <FaBullhorn size={20} />
-            Aktualizacje
-          </button>
-          <button
-            onClick={() => setActiveTab('technical')}
-            className={`flex-1 flex items-center justify-center gap-2 px-6 py-4 rounded-lg font-semibold transition-all whitespace-nowrap ${
-              activeTab === 'technical'
-                ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/50'
-                : 'bg-gray-800/50 text-gray-400 hover:text-white'
-            }`}
-          >
-            <FaTools size={20} />
-            Techniczne
-          </button>
-        </div>
+        ))}
       </div>
 
-      {activeTab === 'verification' && <VerificationPanel />}
-      {activeTab === 'users' && <UsersManagementNew />}
-      {activeTab === 'chat' && <ChatManagement />}
-      {activeTab === 'updates' && <UpdatesManagement />}
-      {activeTab === 'technical' && <TechnicalManagement />}
+      {/* Sub-content with animation */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, x: 20 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={{ opacity: 0, x: -20 }}
+          transition={{ duration: 0.3 }}
+          className="relative"
+        >
+          {activeTab === 'verification' && <VerificationPanel />}
+          {activeTab === 'users' && <UsersManagementNew />}
+          {activeTab === 'chat' && <ChatManagement />}
+          {activeTab === 'updates' && <UpdatesManagement />}
+          {activeTab === 'technical' && <TechnicalManagement />}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }
+

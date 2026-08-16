@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaBan, FaExclamationTriangle, FaEye, FaLock, FaUnlock, FaTimes, FaEdit, FaTrash, FaNewspaper } from 'react-icons/fa';
+import { FaBan, FaExclamationTriangle, FaEye, FaLock, FaUnlock, FaTimes, FaEdit, FaTrash, FaNewspaper, FaSearch, FaUserShield, FaHistory, FaChevronRight, FaPlus, FaMinus, FaCheck, FaClock } from 'react-icons/fa';
 import EditPostModal from './EditPostModal';
 
 interface User {
@@ -10,8 +10,6 @@ interface User {
   name: string;
   email?: string;
   image?: string;
-  discordId?: string;
-  discordUsername?: string;
   isBlocked: boolean;
   isRestricted: boolean;
   createdAt: string;
@@ -151,10 +149,7 @@ export default function UsersManagement() {
       const res = await fetch(`/api/admin/users/${userId}/posts`);
       if (res.ok) {
         const data = await res.json();
-        console.log('Fetched posts:', data);
         setUserPosts(data);
-      } else {
-        console.error('Failed to fetch posts:', res.status);
       }
     } catch (error) {
       console.error('Error fetching posts:', error);
@@ -334,1035 +329,862 @@ export default function UsersManagement() {
 
   if (loading) {
     return (
-      <div className="flex justify-center py-8">
+      <div className="flex justify-center py-24">
         <motion.div
           animate={{ rotate: 360 }}
           transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-          className="w-12 h-12 border-4 border-purple-500 border-t-transparent rounded-full"
+          className="w-12 h-12 border-2 border-primary-500 border-t-transparent rounded-full shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)]"
         />
       </div>
     );
   }
 
-  // Filtrowanie użytkowników
   const filteredUsers = users.filter(user => {
     if (!searchQuery.trim()) return true;
     const query = searchQuery.toLowerCase();
     return (
       user.id.toLowerCase().includes(query) ||
       user.name.toLowerCase().includes(query) ||
-      user.email?.toLowerCase().includes(query) ||
-      user.discordUsername?.toLowerCase().includes(query)
+      user.email?.toLowerCase().includes(query)
     );
   });
 
   return (
     <>
-      <div className="space-y-4">
-        <div className="bg-gray-800/50 rounded-xl p-4 border border-purple-500/20 mb-6">
-          <p className="text-gray-400 text-sm mb-4">
-            Zarządzaj użytkownikami platformy. Możesz blokować konta, ograniczać dostęp i wysyłać ostrzeżenia.
-          </p>
-          
-          {/* Wyszukiwarka */}
-          <div className="relative">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Szukaj po ID, nazwie, email lub Discord..."
-              className="w-full bg-gray-900 text-white px-4 py-3 rounded-lg border border-purple-500/30 focus:border-purple-500 focus:outline-none transition-colors pl-4"
-            />
-            {searchQuery && (
-              <button
-                onClick={() => setSearchQuery('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-              >
-                <FaTimes />
-              </button>
-            )}
+      <div className="space-y-12">
+      {/* Search and Filter Section */}
+      <section className="glass rounded-[3rem] p-10 border-white/5 relative overflow-hidden">
+        <div className="flex flex-col md:flex-row gap-8 items-start md:items-center relative z-10">
+          <div className="flex-1 w-full space-y-4">
+            <h2 className="text-3xl font-black text-white tracking-tighter uppercase italic">Ewidencja Obywateli</h2>
+            <div className="relative group">
+              <div className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-500 group-focus-within:text-primary-400 transition-colors">
+                <FaSearch size={18} />
+              </div>
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Identyfikator, nazwa lub kontakt..."
+                className="w-full glass-dark bg-black/40 border-2 border-white/5 focus:border-primary-500/50 rounded-[2rem] py-6 pl-16 pr-10 text-sm font-bold text-white placeholder:text-gray-600 focus:outline-none transition-all shadow-inner uppercase tracking-wider"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-6 top-1/2 -translate-y-1/2 w-10 h-10 glass rounded-full flex items-center justify-center text-gray-500 hover:text-white transition-all"
+                >
+                  <FaTimes size={14} />
+                </button>
+              )}
+            </div>
           </div>
           
-          <div className="mt-3 text-sm text-gray-400">
-            Znaleziono: <span className="text-purple-400 font-semibold">{filteredUsers.length}</span> użytkowników
+          <div className="bg-primary-500/5 border border-primary-500/20 rounded-[2.5rem] py-8 px-10 text-center min-w-[200px]">
+            <span className="block text-[40px] font-black text-primary-400 leading-none tracking-tighter italic">{filteredUsers.length}</span>
+            <span className="block text-[9px] text-gray-500 font-black uppercase tracking-[0.3em] mt-2">Aktywnych Profilów</span>
           </div>
         </div>
+        <div className="absolute top-0 right-0 p-8 opacity-[0.03] pointer-events-none">
+          <FaUserShield size={120} />
+        </div>
+      </section>
 
-      {filteredUsers.map((user, index) => (
-        <motion.div
-          key={user.id}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.05 }}
-          className={`bg-gray-800/50 rounded-xl p-6 border transition-all ${
-            user.isBlocked
-              ? 'border-red-500/30'
-              : user.isRestricted
-              ? 'border-yellow-500/30'
-              : 'border-purple-500/20'
-          }`}
-        >
-          <div className="flex items-start justify-between">
-            <div className="flex items-start gap-4 flex-1">
-              {user.image ? (
-                <img
-                  src={user.image}
-                  alt={user.name}
-                  className="w-16 h-16 rounded-full"
-                />
-              ) : (
-                <div className="w-16 h-16 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold text-xl">
-                  {user.name.charAt(0).toUpperCase()}
-                </div>
-              )}
-
-              <div className="flex-1">
-                <div className="flex items-center gap-3 mb-2">
-                  <h3 className="text-xl font-bold text-white">{user.name}</h3>
-                  {user.isBlocked && (
-                    <span className="px-2 py-1 bg-red-600/20 text-red-400 text-xs font-semibold rounded border border-red-500/30">
-                      ZABLOKOWANY
-                    </span>
-                  )}
-                  {user.isRestricted && (
-                    <span className="px-2 py-1 bg-yellow-600/20 text-yellow-400 text-xs font-semibold rounded border border-yellow-500/30">
-                      OGRANICZONY
-                    </span>
+      {/* User Grid */}
+      <div className="grid grid-cols-1 gap-8">
+        {filteredUsers.map((user, index) => (
+          <motion.div
+            key={user.id}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.05 }}
+            className={`glass rounded-[3.5rem] p-10 border-white/5 transition-all duration-500 group relative overflow-hidden ${
+              user.isBlocked ? 'border-red-500/30' : user.isRestricted ? 'border-amber-500/30' : 'hover:border-primary-500/30'
+            }`}
+          >
+            <div className="absolute top-0 right-0 w-64 h-64 bg-primary-500/5 rounded-full blur-[100px] pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity" />
+            
+            <div className="flex flex-col lg:flex-row gap-10 items-start relative z-10">
+              <div className="flex items-start gap-8 flex-1">
+                <div className="relative shrink-0 group/avatar">
+                  <div className={`absolute -inset-2 rounded-[2.5rem] blur opacity-20 transition duration-500 ${user.isBlocked ? 'bg-red-500' : 'bg-primary-500'}`} />
+                  {user.image ? (
+                    <img src={user.image} alt={user.name} className="w-24 h-24 rounded-[2rem] object-cover border-2 border-white/10 relative z-10 shadow-2xl" />
+                  ) : (
+                    <div className="w-24 h-24 rounded-[2rem] bg-gradient-to-br from-primary-600 to-primary-800 flex items-center justify-center text-white font-black text-4xl relative z-10 shadow-2xl italic">
+                      {user.name.charAt(0)}
+                    </div>
                   )}
                 </div>
 
-                <div className="space-y-1 text-sm text-gray-400">
-                  {user.email && <p>Email: {user.email}</p>}
-                  {user.discordUsername && (
-                    <p>Discord: {user.discordUsername} ({user.discordId})</p>
-                  )}
-                  <p>Dołączył: {new Date(user.createdAt).toLocaleDateString('pl-PL')}</p>
-                  <p>Posty: {user._count.posts} | Ostrzeżenia: {user._count.warnings}</p>
-                </div>
+                <div className="space-y-4">
+                  <div className="flex flex-wrap items-center gap-4">
+                    <h3 className="text-3xl font-black text-white tracking-tighter uppercase italic">{user.name}</h3>
+                    {user.isBlocked && (
+                      <span className="px-4 py-1.5 bg-red-500/10 text-red-500 text-[9px] font-black uppercase tracking-[0.2em] rounded-full border border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
+                        Restrykcja Całkowita
+                      </span>
+                    )}
+                    {user.isRestricted && (
+                      <span className="px-4 py-1.5 bg-amber-500/10 text-amber-500 text-[9px] font-black uppercase tracking-[0.2em] rounded-full border border-amber-500/20">
+                        Ograniczony Dostęp
+                      </span>
+                    )}
+                  </div>
 
-                {selectedUser?.id === user.id && (
-                  <div className="mt-4 space-y-2">
-                    <textarea
-                      value={warningMessage}
-                      onChange={(e) => setWarningMessage(e.target.value)}
-                      placeholder="Wpisz treść ostrzeżenia..."
-                      className="w-full bg-gray-700 text-white px-3 py-2 rounded-lg border border-yellow-500/30 focus:border-yellow-500 focus:outline-none resize-none text-sm"
-                      rows={3}
-                    />
-                    <div className="flex gap-2">
-                      <motion.button
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => handleWarnUser(user.id)}
-                        disabled={processing || !warningMessage.trim()}
-                        className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-700 text-white font-semibold rounded-lg transition-colors text-sm"
-                      >
-                        Wyślij ostrzeżenie
-                      </motion.button>
-                      <button
-                        onClick={() => {
-                          setSelectedUser(null);
-                          setWarningMessage('');
-                        }}
-                        className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors text-sm"
-                      >
-                        Anuluj
-                      </button>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-2">
+                    {[
+                      { label: 'Identyfikator', value: user.id },
+                      { label: 'System Poczty', value: user.email || 'Brak danych' },
+                      { label: 'Data Rejestracji', value: new Date(user.createdAt).toLocaleDateString('pl-PL') }
+                    ].map((item, i) => (
+                      <div key={i} className="space-y-1">
+                        <span className="block text-[8px] text-gray-600 font-black uppercase tracking-[0.2em]">{item.label}</span>
+                        <span className="block text-[11px] text-gray-400 font-bold tracking-wider truncate uppercase">{item.value}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="flex gap-4 pt-4">
+                    <div className="glass-dark px-6 py-4 rounded-3xl border-white/5 flex items-center gap-4 group/stat transition-colors hover:border-blue-500/30">
+                      <FaNewspaper className="text-blue-400 group-hover/stat:scale-110 transition-transform" />
+                      <div>
+                        <span className="block text-white font-black text-lg leading-none">{user._count.posts}</span>
+                        <span className="block text-[8px] text-gray-600 font-black uppercase tracking-widest">Szonów</span>
+                      </div>
+                    </div>
+                    <div className="glass-dark px-6 py-4 rounded-3xl border-white/5 flex items-center gap-4 group/stat transition-colors hover:border-amber-500/30">
+                      <FaExclamationTriangle className="text-amber-400 group-hover/stat:scale-110 transition-transform" />
+                      <div>
+                        <span className="block text-white font-black text-lg leading-none">{user._count.warnings}</span>
+                        <span className="block text-[8px] text-gray-600 font-black uppercase tracking-widest">Ostrzeżeń</span>
+                      </div>
                     </div>
                   </div>
-                )}
+                </div>
+              </div>
+
+              <div className="flex flex-wrap lg:flex-col gap-3 shrink-0">
+                <div className="grid grid-cols-2 lg:grid-cols-1 gap-3">
+                  <button onClick={() => handleViewPosts(user)} className="btn-action bg-blue-500/10 text-blue-400 hover:bg-blue-500/20 border-blue-500/20" title="Archiwum postów">
+                    <FaNewspaper /> <span className="lg:hidden text-[9px] font-black uppercase ml-2">Posty</span>
+                  </button>
+                  <button onClick={() => handleViewWarnings(user)} className="btn-action bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 border-purple-500/20" title="Historia naruszeń">
+                    <FaHistory /> <span className="lg:hidden text-[9px] font-black uppercase ml-2">Historia</span>
+                  </button>
+                  <button onClick={() => setSelectedUser(selectedUser?.id === user.id ? null : user)} className="btn-action bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 border-amber-500/20" title="Nadaj ostrzeżenie">
+                    <FaExclamationTriangle /> <span className="lg:hidden text-[9px] font-black uppercase ml-2">Warn</span>
+                  </button>
+                  <button onClick={() => handleRestrictUser(user.id, !user.isRestricted)} className={`btn-action ${user.isRestricted ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-orange-500/10 text-orange-400 border-orange-500/20'}`} title={user.isRestricted ? 'Przywróć uprawnienia' : 'Ogranicz aktywność'}>
+                    {user.isRestricted ? <FaUnlock /> : <FaLock />} <span className="lg:hidden text-[9px] font-black uppercase ml-2">{user.isRestricted ? 'Odblokuj' : 'Blokuj'}</span>
+                  </button>
+                  <button onClick={() => handleBlockUser(user.id, !user.isBlocked)} className={`btn-action ${user.isBlocked ? 'bg-green-500/10 text-green-400 border-green-500/20' : 'bg-red-500/10 text-red-500 border-red-500/20'}`} title={user.isBlocked ? 'Zdmij blokadę konta' : 'Zablokuj definitywnie'}>
+                    <FaBan /> <span className="lg:hidden text-[9px] font-black uppercase ml-2">{user.isBlocked ? 'Unban' : 'Ban'}</span>
+                  </button>
+                  <button onClick={() => setDeletingUser(user)} className="btn-action bg-red-900/20 text-red-500 hover:bg-red-900/40 border-red-500/20" title="Usuń z bazy">
+                    <FaTrash /> <span className="lg:hidden text-[9px] font-black uppercase ml-2">Delete</span>
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div className="flex gap-2 ml-4">
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => handleViewPosts(user)}
-                className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                title="Zobacz posty"
-              >
-                <FaNewspaper size={18} />
-              </motion.button>
+            <AnimatePresence>
+              {selectedUser?.id === user.id && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                  animate={{ opacity: 1, height: 'auto', marginTop: 40 }}
+                  exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                  className="overflow-hidden border-t border-white/5 pt-10"
+                >
+                  <div className="glass-dark rounded-[2.5rem] p-10 border-amber-500/20 bg-amber-500/5 relative">
+                    <div className="flex flex-col md:flex-row gap-8 items-end">
+                      <div className="flex-1 w-full space-y-3">
+                        <label className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] ml-2 italic">Protokół Naruszenia Regulaminu</label>
+                        <textarea
+                          value={warningMessage}
+                          onChange={(e) => setWarningMessage(e.target.value)}
+                          placeholder="Opisz powód nałożenia ostrzeżenia..."
+                          className="input-field w-full text-xs min-h-[120px] py-6 px-8 leading-relaxed uppercase tracking-widest shadow-inner"
+                        />
+                      </div>
+                      <div className="flex gap-4 w-full md:w-auto">
+                        <button
+                          onClick={() => handleWarnUser(user.id)}
+                          disabled={processing || !warningMessage.trim()}
+                          className="btn-primary flex-1 py-5 px-10 bg-amber-600 hover:bg-amber-500 text-[10px] font-black uppercase tracking-[0.2em] disabled:opacity-50 shadow-2xl shadow-amber-500/20"
+                        >
+                          Emituj Ostrzeżenie
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedUser(null);
+                            setWarningMessage('');
+                          }}
+                          className="glass py-5 px-10 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] text-gray-500 hover:text-white"
+                        >
+                          Poniechaj
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        ))}
+      </div>
 
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => handleViewWarnings(user)}
-                className="p-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors"
-                title="Zobacz ostrzeżenia"
-              >
-                <FaEye size={18} />
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setSelectedUser(selectedUser?.id === user.id ? null : user)}
-                className="p-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors"
-                title="Dodaj ostrzeżenie"
-              >
-                <FaExclamationTriangle size={18} />
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => handleRestrictUser(user.id, !user.isRestricted)}
-                disabled={processing}
-                className={`p-2 rounded-lg transition-colors ${
-                  user.isRestricted
-                    ? 'bg-green-600 hover:bg-green-700'
-                    : 'bg-orange-600 hover:bg-orange-700'
-                } text-white`}
-                title={user.isRestricted ? 'Usuń ograniczenie' : 'Ogranicz'}
-              >
-                {user.isRestricted ? <FaUnlock size={18} /> : <FaLock size={18} />}
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => handleBlockUser(user.id, !user.isBlocked)}
-                disabled={processing}
-                className={`p-2 rounded-lg transition-colors ${
-                  user.isBlocked
-                    ? 'bg-green-600 hover:bg-green-700'
-                    : 'bg-red-600 hover:bg-red-700'
-                } text-white`}
-                title={user.isBlocked ? 'Odblokuj' : 'Zablokuj'}
-              >
-                <FaBan size={18} />
-              </motion.button>
-
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setDeletingUser(user)}
-                disabled={processing}
-                className="p-2 bg-red-700 hover:bg-red-800 text-white rounded-lg transition-colors"
-                title="Usuń użytkownika"
-              >
-                <FaTrash size={18} />
-              </motion.button>
-            </div>
-          </div>
-        </motion.div>
-      ))}
+      <style jsx global>{`
+        .btn-action {
+          @apply w-12 h-12 lg:w-14 lg:h-14 rounded-2xl flex items-center justify-center transition-all border active:scale-90 shadow-xl;
+        }
+        .btn-action:hover {
+          @apply -translate-y-1;
+        }
+      `}</style>
     </div>
 
       {/* Modal ostrzeżeń użytkownika */}
       <AnimatePresence>
         {viewWarningsUser && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-            onClick={() => {
-              setViewWarningsUser(null);
-              setUserWarnings([]);
-              setEditingWarning(null);
-            }}
-          >
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="bg-gradient-to-br from-gray-900 to-black border-2 border-purple-500/50 rounded-2xl p-6 w-full max-w-3xl max-h-[80vh] overflow-y-auto"
-              onClick={(e) => e.stopPropagation()}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/95 backdrop-blur-2xl"
+              onClick={() => {
+                setViewWarningsUser(null);
+                setUserWarnings([]);
+                setEditingWarning(null);
+              }}
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 30 }}
+              className="glass rounded-[3.5rem] p-12 max-w-4xl w-full max-h-[85vh] overflow-y-auto border-white/10 relative z-10 shadow-[0_0_150px_rgba(var(--primary-rgb),0.1)] scrollbar-hide"
             >
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-white">
-                    Ostrzeżenia użytkownika
-                  </h2>
-                  <p className="text-gray-400">{viewWarningsUser?.name}</p>
+              <div className="flex items-center justify-between mb-12">
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 rounded-[1.5rem] bg-purple-500/10 flex items-center justify-center text-purple-400 shadow-inner border border-purple-500/20">
+                    <FaHistory size={28} />
+                  </div>
+                  <div>
+                    <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">Archiwum Naruszeń</h2>
+                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.3em] mt-2">Dossier: <span className="text-white">{viewWarningsUser?.name}</span></p>
+                  </div>
                 </div>
-                <button
+                <motion.button 
+                  whileHover={{ scale: 1.1, rotate: 90 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={() => {
                     setViewWarningsUser(null);
                     setUserWarnings([]);
                     setEditingWarning(null);
-                  }}
-                  className="text-gray-400 hover:text-white transition-colors"
+                  }} 
+                  className="w-14 h-14 glass rounded-2xl flex items-center justify-center text-gray-500 hover:text-white transition-all shadow-xl"
                 >
                   <FaTimes size={24} />
-                </button>
+                </motion.button>
               </div>
 
               {userWarnings.length === 0 ? (
-                <div className="text-center py-8">
-                  <p className="text-gray-400">
-                    Ten użytkownik nie ma żadnych ostrzeżeń.
-                  </p>
+                <div className="text-center py-20 glass-dark rounded-[3rem] border-dashed border-white/5">
+                  <div className="w-20 h-20 rounded-full bg-green-500/10 flex items-center justify-center text-green-500 mx-auto mb-6">
+                    <FaCheck size={32} />
+                  </div>
+                  <h3 className="text-xl font-black text-white uppercase tracking-widest italic mb-2">Brak wpisów w kartotece</h3>
+                  <p className="text-[10px] text-gray-600 font-black uppercase tracking-widest">Obywatel nie posiada aktywnych ostrzeżeń systemowych</p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {userWarnings.map((warning) => (
-                    <div
+                <div className="space-y-6">
+                  {userWarnings.map((warning, idx) => (
+                    <motion.div
                       key={warning.id}
-                      className="bg-gradient-to-br from-red-900/20 to-red-800/10 border border-red-500/30 rounded-xl p-4"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className="glass-dark border border-amber-500/10 rounded-[2.5rem] p-8 group relative overflow-hidden"
                     >
                       {editingWarning?.id === warning.id ? (
-                        <div className="space-y-3">
+                        <div className="space-y-6">
                           <textarea
                             value={editMessage}
                             onChange={(e) => setEditMessage(e.target.value)}
-                            className="w-full px-4 py-3 bg-black/50 border border-purple-500/30 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-purple-500 resize-none"
-                            rows={3}
-                            placeholder="Treść ostrzeżenia..."
+                            className="input-field w-full py-6 px-8 text-xs min-h-[120px] resize-none uppercase tracking-widest leading-relaxed"
                           />
-                          <div className="flex gap-2">
+                          <div className="flex gap-4">
                             <button
                               onClick={handleUpdateWarning}
                               disabled={processing || !editMessage.trim()}
-                              className="px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-lg transition-colors text-sm font-medium"
+                              className="btn-primary py-4 px-10 text-[10px] font-black uppercase tracking-widest"
                             >
-                              Zapisz
+                              Zatwierdź Korektę
                             </button>
                             <button
                               onClick={() => {
                                 setEditingWarning(null);
                                 setEditMessage('');
                               }}
-                              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg transition-colors text-sm"
+                              className="glass py-4 px-10 text-[10px] font-black uppercase tracking-widest text-gray-500 hover:text-white"
                             >
                               Anuluj
                             </button>
                           </div>
                         </div>
                       ) : (
-                        <>
-                          <div className="flex justify-between items-start mb-2">
-                            <p className="text-gray-300 flex-1">{warning.message}</p>
-                            <div className="flex gap-2 ml-4">
-                              <button
-                                onClick={() => handleEditWarning(warning)}
-                                className="p-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-                                title="Edytuj"
-                              >
-                                <FaEdit size={14} />
-                              </button>
-                              <button
-                                onClick={() => setDeletingWarning(warning)}
-                                disabled={processing}
-                                className="p-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 text-white rounded-lg transition-colors"
-                                title="Usuń"
-                              >
-                                <FaTrash size={14} />
-                              </button>
+                        <div className="flex flex-col md:flex-row gap-6 items-start">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-3">
+                              <span className="text-[10px] text-amber-500 font-black uppercase tracking-[0.3em]">Sygnatura Ostrzeżenia</span>
+                              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.5)]" />
+                            </div>
+                            <p className="text-gray-300 text-sm font-bold leading-relaxed uppercase tracking-widest">{warning.message}</p>
+                            <div className="mt-6 flex items-center gap-4 text-[9px] text-gray-600 font-black uppercase tracking-widest">
+                              <FaClock className="text-primary-500" /> {new Date(warning.createdAt).toLocaleString('pl-PL')}
                             </div>
                           </div>
-                          <p className="text-sm text-gray-500">
-                            {new Date(warning.createdAt).toLocaleDateString('pl-PL', {
-                              year: 'numeric',
-                              month: 'long',
-                              day: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </p>
-                        </>
+                          <div className="flex gap-3 shrink-0">
+                            <button onClick={() => handleEditWarning(warning)} className="w-12 h-12 glass rounded-2xl flex items-center justify-center text-blue-400 hover:bg-blue-500/10 transition-all border-white/5" title="Edytuj wpis">
+                              <FaEdit size={18} />
+                            </button>
+                            <button onClick={() => setDeletingWarning(warning)} className="w-12 h-12 glass rounded-2xl flex items-center justify-center text-red-400 hover:bg-red-500/10 transition-all border-white/5" title="Usuń z historii">
+                              <FaTrash size={18} />
+                            </button>
+                          </div>
+                        </div>
                       )}
-                    </div>
+                      <div className="absolute top-0 right-0 p-4 opacity-[0.02] pointer-events-none group-hover:scale-110 transition-transform">
+                        <FaExclamationTriangle size={60} />
+                      </div>
+                    </motion.div>
                   ))}
                 </div>
               )}
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
       {/* Modal potwierdzenia usunięcia ostrzeżenia */}
       <AnimatePresence>
         {deletingWarning && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-            onClick={() => setDeletingWarning(null)}
-          >
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-6">
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 max-w-md w-full border border-red-500/30 shadow-2xl"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/95 backdrop-blur-2xl"
+              onClick={() => setDeletingWarning(null)}
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="glass rounded-[3rem] p-10 max-w-lg w-full border-red-500/20 bg-red-900/5 relative z-10 shadow-2xl"
             >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center">
-                  <FaTrash size={24} className="text-red-500" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">Potwierdź usunięcie</h3>
-                  <p className="text-gray-400 text-sm">Ta operacja jest nieodwracalna</p>
-                </div>
+              <div className="w-20 h-20 rounded-[1.5rem] bg-red-500/10 flex items-center justify-center text-red-500 mx-auto mb-8 shadow-inner border border-red-500/20">
+                <FaTrash size={32} />
               </div>
-
-              <div className="bg-yellow-900/20 rounded-xl p-4 mb-6 border border-yellow-500/30">
-                <p className="text-yellow-400 text-sm font-semibold mb-2">⚠️ Treść ostrzeżenia:</p>
-                <p className="text-gray-300 text-sm">{deletingWarning.message}</p>
-                <p className="text-gray-500 text-xs mt-2">
-                  {new Date(deletingWarning.createdAt).toLocaleDateString('pl-PL', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </p>
-              </div>
-
-              <p className="text-gray-300 mb-6">
-                Czy na pewno chcesz usunąć to ostrzeżenie? Status użytkownika zostanie automatycznie zaktualizowany na podstawie pozostałych ostrzeżeń.
+              
+              <h3 className="text-3xl font-black text-white text-center uppercase tracking-tighter italic mb-4">Usuń Ostrzeżenie</h3>
+              <p className="text-center text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] mb-10 leading-relaxed">
+                Potwierdź usunięcie wpisu z bazy danych. Ta operacja jest definitywna i nieodwracalna.
               </p>
 
-              <div className="flex gap-3">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+              <div className="glass-dark rounded-2xl p-6 mb-10 border-white/5">
+                <p className="text-[9px] text-gray-600 font-black uppercase tracking-widest mb-3 italic">Treść naruszenia:</p>
+                <p className="text-[11px] text-gray-400 font-bold uppercase tracking-widest leading-relaxed">"{deletingWarning.message}"</p>
+              </div>
+
+              <div className="flex gap-4">
+                <button
                   onClick={() => handleDeleteWarning(deletingWarning.id)}
                   disabled={processing}
-                  className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
+                  className="flex-1 py-5 bg-red-600 hover:bg-red-700 text-white font-black text-[10px] uppercase tracking-[0.3em] rounded-2xl transition-all shadow-xl shadow-red-900/20 active:scale-95 disabled:opacity-50"
                 >
-                  {processing ? 'Usuwanie...' : 'Usuń ostrzeżenie'}
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  Usuń Wpis
+                </button>
+                <button
                   onClick={() => setDeletingWarning(null)}
-                  disabled={processing}
-                  className="flex-1 px-4 py-3 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-600 text-white font-semibold rounded-lg transition-colors"
+                  className="flex-1 py-5 glass text-gray-500 hover:text-white font-black text-[10px] uppercase tracking-[0.3em] rounded-2xl transition-all active:scale-95"
                 >
-                  Anuluj
-                </motion.button>
+                  Poniechaj
+                </button>
               </div>
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
       {/* Modal podglądu postów użytkownika */}
       <AnimatePresence>
         {viewPostsUser && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-            onClick={() => {
-              setViewPostsUser(null);
-              setUserPosts([]);
-            }}
-          >
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 max-w-4xl w-full max-h-[80vh] overflow-y-auto border border-blue-500/30 shadow-2xl"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/95 backdrop-blur-2xl"
+              onClick={() => {
+                setViewPostsUser(null);
+                setUserPosts([]);
+              }}
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 30 }}
+              className="glass rounded-[3.5rem] p-12 max-w-5xl w-full max-h-[90vh] overflow-y-auto border-white/10 relative z-10 shadow-2xl scrollbar-hide"
             >
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-white">
-                    Posty użytkownika
-                  </h2>
-                  <p className="text-gray-400">{viewPostsUser?.name}</p>
+              <div className="flex items-center justify-between mb-12">
+                <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 rounded-[1.5rem] bg-blue-500/10 flex items-center justify-center text-blue-400 shadow-inner border border-blue-500/20">
+                    <FaNewspaper size={28} />
+                  </div>
+                  <div>
+                    <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">Archiwum Publikacji</h2>
+                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.3em] mt-2">Autor: <span className="text-white">{viewPostsUser?.name}</span></p>
+                  </div>
                 </div>
-                <button
+                <motion.button 
+                  whileHover={{ scale: 1.1, rotate: 90 }}
+                  whileTap={{ scale: 0.9 }}
                   onClick={() => {
                     setViewPostsUser(null);
                     setUserPosts([]);
-                  }}
-                  className="text-gray-400 hover:text-white transition-colors"
+                  }} 
+                  className="w-14 h-14 glass rounded-2xl flex items-center justify-center text-gray-500 hover:text-white transition-all shadow-xl"
                 >
                   <FaTimes size={24} />
-                </button>
+                </motion.button>
               </div>
 
               {userPosts.length === 0 ? (
-                <div className="text-center py-12">
-                  <FaNewspaper size={48} className="mx-auto text-gray-600 mb-4" />
-                  <p className="text-gray-400">Użytkownik nie ma jeszcze żadnych postów</p>
+                <div className="text-center py-24 glass-dark rounded-[3rem] border-dashed border-white/5">
+                  <FaNewspaper size={64} className="mx-auto text-gray-800 mb-6 opacity-20" />
+                  <h3 className="text-xl font-black text-white uppercase tracking-widest italic mb-2">Brak aktywności</h3>
+                  <p className="text-[10px] text-gray-600 font-black uppercase tracking-widest">Obywatel nie posiada jeszcze żadnych postów w systemie</p>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {userPosts.map((post) => (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                  {userPosts.map((post, idx) => (
                     <motion.div
                       key={post.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={`bg-gray-800/50 rounded-xl p-4 border ${
-                        post.status === 'APPROVED'
-                          ? 'border-green-500/30'
-                          : post.status === 'REJECTED'
-                          ? 'border-red-500/30'
-                          : 'border-yellow-500/30'
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ delay: idx * 0.05 }}
+                      className={`glass-dark rounded-[3rem] p-8 border group transition-all duration-500 hover:border-primary-500/30 ${
+                        post.status === 'APPROVED' ? 'border-green-500/10' : post.status === 'REJECTED' ? 'border-red-500/10' : 'border-amber-500/10'
                       }`}
                     >
-                      <div className="flex items-start justify-between mb-3">
-                        <div className="flex-1">
-                          <h3 className="text-lg font-bold text-white mb-1">{post.title}</h3>
-                          <span
-                            className={`inline-block px-3 py-1 rounded-full text-xs font-semibold ${
-                              post.status === 'APPROVED'
-                                ? 'bg-green-600/20 text-green-400 border border-green-500/30'
-                                : post.status === 'REJECTED'
-                                ? 'bg-red-600/20 text-red-400 border border-red-500/30'
-                                : 'bg-yellow-600/20 text-yellow-400 border border-yellow-500/30'
-                            }`}
-                          >
-                            {post.status === 'APPROVED'
-                              ? 'Zatwierdzony'
-                              : post.status === 'REJECTED'
-                              ? 'Odrzucony'
-                              : 'Weryfikowanie'}
-                          </span>
+                      <div className="flex items-start justify-between mb-6">
+                        <div className="space-y-3">
+                          <h3 className="text-xl font-black text-white uppercase tracking-tight italic group-hover:text-primary-400 transition-colors">{post.title}</h3>
+                          <div className={`inline-flex px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border shadow-sm ${
+                            post.status === 'APPROVED' ? 'bg-green-500/10 text-green-500 border-green-500/20' : 
+                            post.status === 'REJECTED' ? 'bg-red-500/10 text-red-500 border-red-500/20' : 
+                            'bg-amber-500/10 text-amber-500 border-amber-500/20'
+                          }`}>
+                            {post.status === 'APPROVED' ? 'Status: Aktywny' : post.status === 'REJECTED' ? 'Status: Odrzucony' : 'Status: Weryfikacja'}
+                          </div>
                         </div>
-                        <span className="text-sm text-gray-500">
-                          {new Date(post.createdAt).toLocaleDateString('pl-PL')}
-                        </span>
+                        <span className="text-[10px] text-gray-600 font-black uppercase tracking-widest">{new Date(post.createdAt).toLocaleDateString('pl-PL')}</span>
                       </div>
-                      <p className="text-gray-400 text-sm mb-3 line-clamp-2">
+
+                      <p className="text-[11px] text-gray-500 font-bold uppercase tracking-widest leading-relaxed line-clamp-3 mb-8 opacity-80 group-hover:opacity-100 transition-opacity">
                         {post.description}
                       </p>
+
                       {post.images && post.images.length > 0 && (
-                        <div className="flex gap-2 mb-3">
-                          {post.images.slice(0, 4).map((img: string, idx: number) => (
-                            <img
-                              key={idx}
-                              src={img}
-                              alt={`${post.title} - ${idx + 1}`}
-                              className="w-16 h-16 object-cover rounded-lg"
-                            />
+                        <div className="flex gap-3 mb-8">
+                          {post.images.slice(0, 3).map((img: string, i: number) => (
+                            <img key={i} src={img} className="w-16 h-12 object-cover rounded-xl border border-white/10 shadow-lg" />
                           ))}
-                          {post.images.length > 4 && (
-                            <div className="w-16 h-16 bg-gray-700 rounded-lg flex items-center justify-center text-gray-400 text-xs">
-                              +{post.images.length - 4}
-                            </div>
+                          {post.images.length > 3 && (
+                            <div className="w-16 h-12 glass rounded-xl flex items-center justify-center text-[10px] font-black text-gray-500">+{post.images.length - 3}</div>
                           )}
                         </div>
                       )}
                       
-                      {/* Ostrzeżenia dla posta */}
-                      {post.warnings && post.warnings.length > 0 && (
-                        <div className="mb-3 p-3 bg-yellow-900/20 border border-yellow-500/30 rounded-lg">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex items-center gap-2">
-                              <FaExclamationTriangle className="text-yellow-500" size={14} />
-                              <span className="text-yellow-400 font-semibold text-sm">
-                                Ostrzeżenia ({post.warnings.length})
-                              </span>
-                            </div>
-                            <motion.button
-                              whileHover={{ scale: 1.05 }}
-                              whileTap={{ scale: 0.95 }}
-                              onClick={() => setViewPostWarnings(post)}
-                              className="text-xs text-yellow-400 hover:text-yellow-300 underline"
-                            >
-                              Zobacz wszystkie
-                            </motion.button>
-                          </div>
-                          <p className="text-yellow-300/80 text-xs line-clamp-1">
-                            {post.warnings[0].message}
-                          </p>
-                        </div>
-                      )}
-                      
-                      {/* Akcje dla posta */}
-                      <div className="flex gap-2 pt-3 border-t border-gray-700">
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => setPreviewPost(post)}
-                          className="flex items-center gap-2 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors"
-                        >
-                          <FaEye size={14} />
-                          Podgląd
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => setEditingPost(post)}
-                          className="flex items-center gap-2 px-3 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition-colors"
-                        >
-                          <FaEdit size={14} />
-                          Edytuj
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => setWarningPost(post)}
-                          className="flex items-center gap-2 px-3 py-2 bg-yellow-600 hover:bg-yellow-700 text-white text-sm rounded-lg transition-colors"
-                        >
-                          <FaExclamationTriangle size={14} />
-                          Ostrzeż
-                        </motion.button>
-                        <motion.button
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => setDeletingPost(post)}
-                          className="flex items-center gap-2 px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-sm rounded-lg transition-colors"
-                        >
-                          <FaTrash size={14} />
-                          Usuń
-                        </motion.button>
+                      <div className="grid grid-cols-2 gap-3 pt-6 border-t border-white/5">
+                        <button onClick={() => setPreviewPost(post)} className="glass py-4 rounded-2xl flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-widest text-blue-400 hover:bg-blue-500/10 transition-all border-white/5">
+                          <FaEye size={12} /> Podgląd
+                        </button>
+                        <button onClick={() => setEditingPost(post)} className="glass py-4 rounded-2xl flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-widest text-purple-400 hover:bg-purple-500/10 transition-all border-white/5">
+                          <FaEdit size={12} /> Edycja
+                        </button>
+                        <button onClick={() => setWarningPost(post)} className="glass py-4 rounded-2xl flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-widest text-amber-400 hover:bg-amber-500/10 transition-all border-white/5">
+                          <FaExclamationTriangle size={12} /> Ostrzeż
+                        </button>
+                        <button onClick={() => setDeletingPost(post)} className="glass py-4 rounded-2xl flex items-center justify-center gap-2 text-[9px] font-black uppercase tracking-widest text-red-400 hover:bg-red-500/10 transition-all border-white/5">
+                          <FaTrash size={12} /> Usuń
+                        </button>
                       </div>
                     </motion.div>
                   ))}
                 </div>
               )}
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
       {/* Modal podglądu posta */}
       <AnimatePresence>
         {previewPost && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-            onClick={() => setPreviewPost(null)}
-          >
+          <div className="fixed inset-0 z-[110] flex items-center justify-center p-6">
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto border border-blue-500/30 shadow-2xl"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/95 backdrop-blur-2xl"
+              onClick={() => setPreviewPost(null)}
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 30 }}
+              className="glass rounded-[4rem] p-12 max-w-4xl w-full max-h-[90vh] overflow-y-auto border-white/10 relative z-10 shadow-[0_0_200px_rgba(0,0,0,0.5)] scrollbar-hide"
             >
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-bold text-white">Podgląd posta</h2>
-                <button
-                  onClick={() => setPreviewPost(null)}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <FaTimes size={24} />
-                </button>
-              </div>
-
-              {/* Symulacja posta */}
-              <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl border border-purple-500/20 p-6 shadow-lg">
-                <div className="flex items-center gap-3 mb-4">
-                  {previewPost.user?.image ? (
-                    <img
-                      src={previewPost.user.image}
-                      alt={previewPost.user.name}
-                      className="w-12 h-12 rounded-full"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold text-lg">
-                      {previewPost.user?.name?.charAt(0).toUpperCase() || 'U'}
-                    </div>
-                  )}
+               <div className="flex items-center justify-between mb-12">
+                <div className="flex items-center gap-5">
+                  <div className="w-16 h-16 rounded-[1.5rem] bg-blue-500/10 flex items-center justify-center text-blue-400 shadow-inner">
+                    <FaEye size={28} />
+                  </div>
                   <div>
-                    <p className="font-semibold text-white text-lg">{previewPost.user?.name || 'Użytkownik'}</p>
-                    <p className="text-sm text-gray-400">
-                      {new Date(previewPost.createdAt).toLocaleDateString('pl-PL', {
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric',
-                      })}
-                    </p>
+                    <h2 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">Wgląd w Archiwum</h2>
+                    <p className="text-[10px] text-gray-500 font-black uppercase tracking-[0.3em] mt-2">Pełna ekspozycja danych publikacji</p>
                   </div>
                 </div>
+                <motion.button 
+                  whileHover={{ scale: 1.1, rotate: 90 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setPreviewPost(null)} 
+                  className="w-14 h-14 glass rounded-2xl flex items-center justify-center text-gray-500 hover:text-white transition-all shadow-xl"
+                >
+                  <FaTimes size={24} />
+                </motion.button>
+              </div>
 
-                <h3 className="text-3xl font-bold text-white mb-4">{previewPost.title}</h3>
-                <p className="text-gray-300 mb-6 whitespace-pre-wrap leading-relaxed">
-                  {previewPost.description}
-                </p>
-
+              <div className="glass-dark rounded-[3.5rem] overflow-hidden border-white/5 shadow-2xl">
                 {previewPost.images && previewPost.images.length > 0 && (
-                  <div className="grid grid-cols-2 gap-3 mb-6">
-                    {previewPost.images.map((img: string, idx: number) => (
-                      <motion.img
-                        key={idx}
-                        src={img}
-                        alt={`${previewPost.title} - ${idx + 1}`}
-                        className="w-full h-64 object-cover rounded-lg"
-                        whileHover={{ scale: 1.02 }}
-                        whileTap={{ scale: 0.98 }}
-                      />
+                  <div className="relative aspect-video w-full overflow-hidden">
+                    <img src={previewPost.images[0]} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+                    <div className="absolute bottom-10 left-10 right-10">
+                       <h3 className="text-5xl font-black text-white leading-none tracking-tighter uppercase italic drop-shadow-2xl">{previewPost.title}</h3>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="p-12 space-y-10">
+                  <div className="flex items-center gap-4 p-6 glass rounded-3xl border-white/5 bg-white/5">
+                    {previewPost.user?.image ? (
+                      <img src={previewPost.user.image} className="w-14 h-14 rounded-2xl border-2 border-white/10" />
+                    ) : (
+                      <div className="w-14 h-14 rounded-2xl bg-primary-600 flex items-center justify-center text-white font-black text-2xl italic">{previewPost.user?.name?.charAt(0) || 'U'}</div>
+                    )}
+                    <div>
+                      <p className="text-white font-black text-lg uppercase tracking-tight">{previewPost.user?.name || 'Autor Nieznany'}</p>
+                      <p className="text-[10px] text-gray-500 font-black uppercase tracking-widest">{new Date(previewPost.createdAt).toLocaleDateString('pl-PL')}</p>
+                    </div>
+                  </div>
+
+                  <p className="text-gray-300 text-lg font-medium leading-relaxed whitespace-pre-wrap uppercase tracking-wider">{previewPost.description}</p>
+                  
+                  {previewPost.images && previewPost.images.length > 1 && (
+                    <div className="grid grid-cols-2 gap-6">
+                      {previewPost.images.slice(1).map((img: string, i: number) => (
+                        <img key={i} src={img} className="w-full aspect-[4/3] object-cover rounded-[2.5rem] border border-white/5 shadow-xl" />
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-4 pt-10 border-t border-white/5">
+                    {[
+                      { url: previewPost.facebookUrl, label: 'Meta', color: 'bg-blue-500' },
+                      { url: previewPost.instagramUrl, label: 'Insta', color: 'bg-gradient-to-tr from-yellow-500 via-pink-500 to-purple-600' },
+                      { url: previewPost.tiktokUrl, label: 'TikTok', color: 'bg-black border-white/10' }
+                    ].filter(s => s.url).map((s, i) => (
+                      <span key={i} className="px-8 py-3 glass rounded-full text-white text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3">
+                        <div className={`w-2 h-2 rounded-full ${s.color}`} /> {s.label} Link
+                      </span>
                     ))}
                   </div>
-                )}
-
-                {(previewPost.facebookUrl || previewPost.instagramUrl || previewPost.tiktokUrl) && (
-                  <div className="flex gap-3 pt-4 border-t border-gray-700">
-                    {previewPost.facebookUrl && (
-                      <span className="px-4 py-2 bg-blue-600/20 border border-blue-500/30 rounded-lg text-blue-400 text-sm font-medium">
-                        Facebook
-                      </span>
-                    )}
-                    {previewPost.instagramUrl && (
-                      <span className="px-4 py-2 bg-pink-600/20 border border-pink-500/30 rounded-lg text-pink-400 text-sm font-medium">
-                        Instagram
-                      </span>
-                    )}
-                    {previewPost.tiktokUrl && (
-                      <span className="px-4 py-2 bg-gray-600/20 border border-gray-500/30 rounded-lg text-white text-sm font-medium">
-                        TikTok
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="mt-6 p-4 bg-blue-900/20 border border-blue-500/30 rounded-xl">
-                <p className="text-blue-400 text-sm">
-                  💡 Tak wygląda ten post dla wszystkich użytkowników na stronie głównej
-                </p>
+                </div>
               </div>
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
       {/* Modal ostrzeżenia dla posta */}
       <AnimatePresence>
         {warningPost && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-            onClick={() => {
-              setWarningPost(null);
-              setPostWarningMessage('');
-            }}
-          >
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-6">
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 max-w-md w-full border border-yellow-500/30 shadow-2xl"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/95 backdrop-blur-2xl"
+              onClick={() => {
+                setWarningPost(null);
+                setPostWarningMessage('');
+              }}
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="glass rounded-[3.5rem] p-12 max-w-xl w-full border-amber-500/20 bg-amber-900/5 relative z-10 shadow-2xl"
             >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-yellow-500/20 rounded-full flex items-center justify-center">
-                  <FaExclamationTriangle size={24} className="text-yellow-500" />
+              <div className="w-20 h-20 rounded-[2rem] bg-amber-500/10 flex items-center justify-center text-amber-500 mx-auto mb-10 shadow-inner border border-amber-500/20">
+                <FaExclamationTriangle size={32} />
+              </div>
+              
+              <h3 className="text-3xl font-black text-white text-center uppercase tracking-tighter italic mb-10 leading-none">Ostrzeżenie Publikacji</h3>
+              
+              <div className="space-y-6">
+                <div className="glass-dark rounded-3xl p-8 border-white/5">
+                  <p className="text-[10px] text-gray-600 font-black uppercase tracking-widest mb-3">Tytuł publikacji:</p>
+                  <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">{warningPost.title}</p>
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">Dodaj ostrzeżenie</h3>
-                  <p className="text-gray-400 text-sm">Powód ostrzeżenia dla posta</p>
+
+                <div className="space-y-3">
+                  <label className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] ml-2">Uzasadnienie Moderacyjne</label>
+                  <textarea
+                    value={postWarningMessage}
+                    onChange={(e) => setPostWarningMessage(e.target.value)}
+                    placeholder="Wprowadź powód sankcji dla tego postu..."
+                    className="input-field w-full py-6 px-8 text-xs min-h-[140px] resize-none uppercase tracking-widest leading-relaxed"
+                  />
                 </div>
               </div>
 
-              <div className="bg-gray-800/50 rounded-xl p-4 mb-4 border border-gray-700">
-                <p className="text-white font-semibold mb-1">{warningPost.title}</p>
-                <p className="text-gray-400 text-sm line-clamp-2">{warningPost.description}</p>
-              </div>
-
-              <textarea
-                value={postWarningMessage}
-                onChange={(e) => setPostWarningMessage(e.target.value)}
-                placeholder="Wpisz powód ostrzeżenia..."
-                className="w-full bg-gray-700 text-white px-4 py-3 rounded-lg border border-yellow-500/30 focus:border-yellow-500 focus:outline-none resize-none mb-4"
-                rows={4}
-              />
-
-              <div className="flex gap-3">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+              <div className="flex gap-4 mt-12">
+                <button
                   onClick={() => handleWarnPost(warningPost.id)}
                   disabled={processing || !postWarningMessage.trim()}
-                  className="flex-1 px-4 py-3 bg-yellow-600 hover:bg-yellow-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
+                  className="flex-1 py-5 bg-amber-600 hover:bg-amber-500 text-black font-black text-[10px] uppercase tracking-[0.3em] rounded-2xl transition-all shadow-xl shadow-amber-900/20 disabled:opacity-50 active:scale-95"
                 >
-                  {processing ? 'Wysyłanie...' : 'Wyślij ostrzeżenie'}
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  Nadaj Warn
+                </button>
+                <button
                   onClick={() => {
                     setWarningPost(null);
                     setPostWarningMessage('');
                   }}
-                  disabled={processing}
-                  className="flex-1 px-4 py-3 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-600 text-white font-semibold rounded-lg transition-colors"
+                  className="flex-1 py-5 glass text-gray-500 hover:text-white font-black text-[10px] uppercase tracking-[0.3em] rounded-2xl transition-all active:scale-95"
                 >
-                  Anuluj
-                </motion.button>
+                  Poniechaj
+                </button>
               </div>
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
       {/* Modal usuwania posta */}
       <AnimatePresence>
         {deletingPost && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-            onClick={() => setDeletingPost(null)}
-          >
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-6">
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 max-w-md w-full border border-red-500/30 shadow-2xl"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/95 backdrop-blur-2xl"
+              onClick={() => setDeletingPost(null)}
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="glass rounded-[3.5rem] p-12 max-w-xl w-full border-red-500/20 bg-red-900/5 relative z-10 shadow-2xl"
             >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center">
-                  <FaTrash size={24} className="text-red-500" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">Potwierdź usunięcie</h3>
-                  <p className="text-gray-400 text-sm">Ta operacja jest nieodwracalna</p>
-                </div>
+              <div className="w-20 h-20 rounded-[2rem] bg-red-500/10 flex items-center justify-center text-red-500 mx-auto mb-10 shadow-inner border border-red-500/20">
+                <FaTrash size={32} />
+              </div>
+              
+              <h3 className="text-3xl font-black text-white text-center uppercase tracking-tighter italic mb-10 leading-none">Eliminacja Publikacji</h3>
+              
+              <div className="glass-dark rounded-3xl p-8 border-white/5 mb-10">
+                <p className="text-[10px] text-gray-600 font-black uppercase tracking-widest mb-3">Post do usunięcia:</p>
+                <p className="text-sm font-bold text-gray-400 uppercase tracking-widest">{deletingPost.title}</p>
               </div>
 
-              <div className="bg-gray-800/50 rounded-xl p-4 mb-6 border border-gray-700">
-                <p className="text-white font-semibold mb-1">{deletingPost.title}</p>
-                <p className="text-gray-400 text-sm line-clamp-2">{deletingPost.description}</p>
-              </div>
-
-              <p className="text-gray-300 mb-6">
-                Czy na pewno chcesz usunąć ten post? Wszystkie dane, w tym zdjęcia i komentarze, zostaną trwale usunięte.
+              <p className="text-center text-[10px] text-gray-600 font-black uppercase tracking-[0.3em] mb-12 leading-relaxed">
+                UWAGA: Wszystkie asocjacje, media i dane powiązane z tym szonem zostaną permanentnie usunięte z rejestru.
               </p>
 
-              <div className="flex gap-3">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+              <div className="flex gap-4">
+                <button
                   onClick={() => handleDeletePost(deletingPost.id)}
                   disabled={processing}
-                  className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
+                  className="flex-1 py-6 bg-red-600 hover:bg-red-500 text-white font-black text-[10px] uppercase tracking-[0.3em] rounded-2xl transition-all shadow-xl shadow-red-900/20 active:scale-95 disabled:opacity-50"
                 >
-                  {processing ? 'Usuwanie...' : 'Usuń post'}
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  Potwierdź Kasację
+                </button>
+                <button
                   onClick={() => setDeletingPost(null)}
-                  disabled={processing}
-                  className="flex-1 px-4 py-3 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-600 text-white font-semibold rounded-lg transition-colors"
+                  className="flex-1 py-6 glass text-gray-500 hover:text-white font-black text-[10px] uppercase tracking-[0.3em] rounded-2xl transition-all active:scale-95"
                 >
                   Anuluj
-                </motion.button>
+                </button>
               </div>
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
       {/* Modal podglądu ostrzeżeń posta */}
       <AnimatePresence>
         {viewPostWarnings && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[60] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-            onClick={() => setViewPostWarnings(null)}
-          >
+          <div className="fixed inset-0 z-[120] flex items-center justify-center p-6">
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 max-w-2xl w-full max-h-[80vh] overflow-y-auto border border-yellow-500/30 shadow-2xl"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/95 backdrop-blur-2xl"
+              onClick={() => setViewPostWarnings(null)}
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 30 }}
+              className="glass rounded-[3.5rem] p-12 max-w-2xl w-full max-h-[80vh] overflow-y-auto border-amber-500/20 relative z-10 shadow-2xl scrollbar-hide"
             >
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h2 className="text-2xl font-bold text-white">Ostrzeżenia posta</h2>
-                  <p className="text-gray-400">{viewPostWarnings.title}</p>
+              <div className="flex items-center justify-between mb-10">
+                <div className="flex items-center gap-5">
+                  <div className="w-16 h-16 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-400">
+                    <FaExclamationTriangle size={28} />
+                  </div>
+                  <div>
+                    <h2 className="text-3xl font-black text-white tracking-tighter uppercase italic leading-none">Sankcje Publikacji</h2>
+                    <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest mt-2">Przegląd naruszeń dla postu</p>
+                  </div>
                 </div>
-                <button
-                  onClick={() => setViewPostWarnings(null)}
-                  className="text-gray-400 hover:text-white transition-colors"
-                >
-                  <FaTimes size={24} />
+                <button onClick={() => setViewPostWarnings(null)} className="w-12 h-12 glass rounded-2xl flex items-center justify-center text-gray-500 hover:text-white transition-all shadow-xl">
+                  <FaTimes size={20} />
                 </button>
               </div>
 
-              {viewPostWarnings.warnings && viewPostWarnings.warnings.length > 0 ? (
-                <div className="space-y-3">
-                  {viewPostWarnings.warnings.map((warning: any) => (
-                    <motion.div
-                      key={warning.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="bg-yellow-900/20 border border-yellow-500/30 rounded-xl p-4"
-                    >
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <FaExclamationTriangle className="text-yellow-500 flex-shrink-0" size={16} />
-                          <span className="text-xs text-gray-400">
-                            {new Date(warning.createdAt).toLocaleString('pl-PL')}
-                          </span>
+              <div className="space-y-6">
+                {viewPostWarnings.warnings.map((warning: any, idx: number) => (
+                  <motion.div
+                    key={warning.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: idx * 0.05 }}
+                    className="glass-dark border border-amber-500/10 rounded-[2.5rem] p-8 group"
+                  >
+                    <div className="flex flex-col md:flex-row gap-6 items-start">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-4">
+                          <span className="text-[10px] text-gray-600 font-black uppercase tracking-widest">{new Date(warning.createdAt).toLocaleString('pl-PL')}</span>
+                          <span className="w-1 h-1 rounded-full bg-amber-500" />
                         </div>
-                        <div className="flex gap-2">
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => {
-                              setEditingPostWarning(warning);
-                              setEditPostWarningMessage(warning.message);
-                            }}
-                            className="p-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 rounded-lg transition-colors"
-                            title="Edytuj"
-                          >
-                            <FaEdit size={14} />
-                          </motion.button>
-                          <motion.button
-                            whileHover={{ scale: 1.05 }}
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => setDeletingPostWarning(warning)}
-                            className="p-2 bg-red-600/20 hover:bg-red-600/30 text-red-400 rounded-lg transition-colors"
-                            title="Usuń"
-                          >
-                            <FaTrash size={14} />
-                          </motion.button>
-                        </div>
+                        <p className="text-amber-200 text-sm font-bold uppercase tracking-widest leading-relaxed">{warning.message}</p>
                       </div>
-                      <p className="text-yellow-200 text-sm leading-relaxed">{warning.message}</p>
-                    </motion.div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <FaExclamationTriangle size={48} className="mx-auto text-gray-600 mb-4" />
-                  <p className="text-gray-400">Brak ostrzeżeń dla tego posta</p>
-                </div>
-              )}
+                      <div className="flex gap-2">
+                        <button onClick={() => { setEditingPostWarning(warning); setEditPostWarningMessage(warning.message); }} className="w-10 h-10 glass rounded-xl flex items-center justify-center text-blue-400 hover:bg-blue-500/10 border-white/5 transition-all">
+                          <FaEdit size={14} />
+                        </button>
+                        <button onClick={() => setDeletingPostWarning(warning)} className="w-10 h-10 glass rounded-xl flex items-center justify-center text-red-400 hover:bg-red-500/10 border-white/5 transition-all">
+                          <FaTrash size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
-      {/* Modal edycji ostrzeżenia posta */}
       <AnimatePresence>
         {editingPostWarning && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-            onClick={() => {
-              setEditingPostWarning(null);
-              setEditPostWarningMessage('');
-            }}
-          >
+          <div className="fixed inset-0 z-[130] flex items-center justify-center p-6">
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 max-w-md w-full border border-blue-500/30 shadow-2xl"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/95 backdrop-blur-2xl"
+              onClick={() => { setEditingPostWarning(null); setEditPostWarningMessage(''); }}
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="glass rounded-[3rem] p-10 max-w-md w-full border-blue-500/20 bg-blue-900/5 relative z-10 shadow-2xl"
             >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-blue-500/20 rounded-full flex items-center justify-center">
-                  <FaEdit size={24} className="text-blue-500" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">Edytuj ostrzeżenie</h3>
-                  <p className="text-gray-400 text-sm">Zmień treść ostrzeżenia</p>
-                </div>
-              </div>
-
+              <h3 className="text-2xl font-black text-white uppercase tracking-tighter italic mb-8 text-center leading-none">Edycja Sankcji</h3>
               <textarea
                 value={editPostWarningMessage}
                 onChange={(e) => setEditPostWarningMessage(e.target.value)}
-                placeholder="Wpisz treść ostrzeżenia..."
-                className="w-full bg-gray-700 text-white px-4 py-3 rounded-lg border border-blue-500/30 focus:border-blue-500 focus:outline-none resize-none mb-4"
-                rows={4}
+                className="input-field w-full py-6 px-8 text-xs min-h-[160px] resize-none uppercase tracking-widest leading-relaxed shadow-inner"
               />
-
-              <div className="flex gap-3">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+              <div className="flex gap-4 mt-10">
+                <button
                   onClick={() => handleEditPostWarning(viewPostWarnings.id, editingPostWarning.id)}
                   disabled={processing || !editPostWarningMessage.trim()}
-                  className="flex-1 px-4 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
+                  className="flex-1 py-5 bg-blue-600 hover:bg-blue-500 text-white font-black text-[10px] uppercase tracking-[0.3em] rounded-2xl transition-all shadow-xl shadow-blue-900/20 disabled:opacity-50 active:scale-95"
                 >
-                  {processing ? 'Zapisywanie...' : 'Zapisz zmiany'}
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => {
-                    setEditingPostWarning(null);
-                    setEditPostWarningMessage('');
-                  }}
-                  disabled={processing}
-                  className="flex-1 px-4 py-3 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-600 text-white font-semibold rounded-lg transition-colors"
+                  Zapisz Korektę
+                </button>
+                <button
+                  onClick={() => { setEditingPostWarning(null); setEditPostWarningMessage(''); }}
+                  className="flex-1 py-5 glass text-gray-500 hover:text-white font-black text-[10px] uppercase tracking-[0.3em] rounded-2xl transition-all active:scale-95"
                 >
-                  Anuluj
-                </motion.button>
+                  Poniechaj
+                </button>
               </div>
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
-      {/* Modal usuwania ostrzeżenia posta */}
       <AnimatePresence>
         {deletingPostWarning && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-            onClick={() => setDeletingPostWarning(null)}
-          >
+          <div className="fixed inset-0 z-[130] flex items-center justify-center p-6">
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              onClick={(e) => e.stopPropagation()}
-              className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-2xl p-6 max-w-md w-full border border-red-500/30 shadow-2xl"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/95 backdrop-blur-2xl"
+              onClick={() => setDeletingPostWarning(null)}
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="glass rounded-[3rem] p-10 max-w-md w-full border-red-500/20 bg-red-900/5 relative z-10 shadow-2xl text-center"
             >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 bg-red-500/20 rounded-full flex items-center justify-center">
-                  <FaTrash size={24} className="text-red-500" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">Usuń ostrzeżenie</h3>
-                  <p className="text-gray-400 text-sm">Ta operacja jest nieodwracalna</p>
-                </div>
+              <div className="w-16 h-16 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-500 mx-auto mb-6 border border-red-500/20">
+                <FaTrash size={24} />
               </div>
-
-              <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-xl p-4 mb-6">
-                <p className="text-yellow-200 text-sm">{deletingPostWarning.message}</p>
-              </div>
-
-              <p className="text-gray-300 mb-6">
-                Czy na pewno chcesz usunąć to ostrzeżenie?
+              <h3 className="text-2xl font-black text-white uppercase tracking-tighter italic mb-4 leading-none">Kasacja Sankcji</h3>
+              <p className="text-[10px] text-gray-600 font-black uppercase tracking-[0.2em] mb-10 leading-relaxed px-4">
+                Potwierdź usunięcie sankcji z rejestru publikacji. Operacja jest nieodwracalna.
               </p>
-
-              <div className="flex gap-3">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+              <div className="flex gap-4">
+                <button
                   onClick={() => handleDeletePostWarning(viewPostWarnings.id, deletingPostWarning.id)}
                   disabled={processing}
-                  className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
+                  className="flex-1 py-5 bg-red-600 hover:bg-red-700 text-white font-black text-[10px] uppercase tracking-[0.3em] rounded-2xl transition-all shadow-xl shadow-red-900/20 active:scale-95"
                 >
-                  {processing ? 'Usuwanie...' : 'Usuń ostrzeżenie'}
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  Usuń Wpis
+                </button>
+                <button
                   onClick={() => setDeletingPostWarning(null)}
-                  disabled={processing}
-                  className="flex-1 px-4 py-3 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-600 text-white font-semibold rounded-lg transition-colors"
+                  className="flex-1 py-5 glass text-gray-500 hover:text-white font-black text-[10px] uppercase tracking-[0.3em] rounded-2xl transition-all active:scale-95"
                 >
                   Anuluj
-                </motion.button>
+                </button>
               </div>
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
@@ -1383,85 +1205,47 @@ export default function UsersManagement() {
       {/* Modal potwierdzenia usunięcia użytkownika */}
       <AnimatePresence>
         {deletingUser && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4"
-            onClick={() => setDeletingUser(null)}
-          >
+          <div className="fixed inset-0 z-[150] flex items-center justify-center p-6">
             <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.9, y: 20 }}
-              className="bg-gradient-to-br from-gray-900 to-black border-2 border-red-500/50 rounded-2xl p-6 w-full max-w-md"
-              onClick={(e) => e.stopPropagation()}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/98 backdrop-blur-3xl"
+              onClick={() => setDeletingUser(null)}
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 30 }}
+              className="glass rounded-[4rem] p-14 max-w-2xl w-full border-red-500/30 bg-red-950/20 relative z-10 shadow-[0_0_150px_rgba(220,38,38,0.2)] text-center"
             >
-              <div className="flex items-center gap-3 mb-4">
-                <div className="w-12 h-12 rounded-full bg-red-600/20 flex items-center justify-center">
-                  <FaTrash className="text-red-500" size={20} />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-white">Usuń użytkownika</h3>
-                  <p className="text-gray-400 text-sm">Ta operacja jest nieodwracalna!</p>
-                </div>
+              <div className="w-24 h-24 rounded-[2.5rem] bg-red-500/20 flex items-center justify-center text-red-500 mx-auto mb-10 shadow-2xl border border-red-500/30 animate-pulse">
+                <FaBan size={40} />
               </div>
-
-              <div className="bg-red-900/20 border border-red-500/30 rounded-xl p-4 mb-6">
-                <div className="flex items-center gap-3">
-                  {deletingUser.image ? (
-                    <img src={deletingUser.image} alt={deletingUser.name} className="w-12 h-12 rounded-full" />
-                  ) : (
-                    <div className="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center text-white font-bold">
-                      {deletingUser.name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                  <div>
-                    <p className="text-white font-semibold">{deletingUser.name}</p>
-                    <p className="text-gray-400 text-sm">{deletingUser.email}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-xl p-4 mb-6">
-                <p className="text-yellow-200 text-sm font-semibold mb-2">⚠️ Uwaga!</p>
-                <p className="text-yellow-200 text-sm">
-                  Usunięcie użytkownika spowoduje <strong>trwałe usunięcie</strong>:
-                </p>
-                <ul className="list-disc list-inside text-yellow-200 text-sm mt-2 space-y-1">
-                  <li>Wszystkich postów użytkownika</li>
-                  <li>Wszystkich komentarzy</li>
-                  <li>Wszystkich ostrzeżeń</li>
-                  <li>Konta i danych osobowych</li>
-                </ul>
-              </div>
-
-              <p className="text-gray-300 mb-6">
-                Czy na pewno chcesz <strong className="text-red-400">permanentnie usunąć</strong> tego użytkownika?
+              
+              <h3 className="text-4xl font-black text-white uppercase tracking-tighter italic mb-6 leading-none">Terminacja Profilu</h3>
+              <p className="text-gray-400 text-xs font-bold uppercase tracking-[0.3em] mb-12 leading-relaxed">
+                Inicjujesz procedurę usuwania konta użytkownika: <span className="text-red-500">{deletingUser.name}</span>. 
+                Wszystkie szony, dane i uprawnienia zostaną bezpowrotnie usunięte z platformy Szoniska.
               </p>
 
-              <div className="flex gap-3">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+              <div className="flex gap-6">
+                <button
                   onClick={() => handleDeleteUser(deletingUser.id)}
                   disabled={processing}
-                  className="flex-1 px-4 py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
+                  className="flex-1 py-6 bg-red-600 hover:bg-red-700 text-white font-black text-[11px] uppercase tracking-[0.4em] rounded-[2rem] transition-all shadow-2xl shadow-red-900/40 active:scale-95 disabled:opacity-50"
                 >
-                  {processing ? 'Usuwanie...' : 'TAK, Usuń użytkownika'}
-                </motion.button>
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
+                  DESTRUKCJA PROFILU
+                </button>
+                <button
                   onClick={() => setDeletingUser(null)}
-                  disabled={processing}
-                  className="flex-1 px-4 py-3 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-600 text-white font-semibold rounded-lg transition-colors"
+                  className="flex-1 py-6 glass text-gray-500 hover:text-white font-black text-[11px] uppercase tracking-[0.4em] rounded-[2rem] transition-all active:scale-95"
                 >
-                  Anuluj
-                </motion.button>
+                  ANULUJ OPERACJĘ
+                </button>
               </div>
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </>

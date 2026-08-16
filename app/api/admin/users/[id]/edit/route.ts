@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { isUserAdmin } from '@/lib/adminAuth';
 import bcrypt from 'bcryptjs';
 
 export const dynamic = 'force-dynamic';
@@ -31,35 +32,26 @@ export async function POST(
       found: !!admin,
       email: admin?.email,
       id: admin?.id,
-      discordId: admin?.discordId,
     });
 
-    // Sprawdzanie czy użytkownik jest adminem:
-    // 1. Email admin: orzech363@gmail.com
-    // 2. Discord ID: 1144910054001225779 (Twój Discord ID)
-    const isAdmin = admin && (
-      admin.email === 'orzech363@gmail.com' ||
-      admin.discordId === '1144910054001225779'
-    );
+    const isAdmin = admin && isUserAdmin(admin);
 
-    console.log('EDIT User - isAdmin:', isAdmin, 'admin.email:', admin?.email, 'admin.discordId:', admin?.discordId);
+    console.log('EDIT User - isAdmin:', isAdmin, 'admin.email:', admin?.email);
 
     if (!isAdmin) {
       return NextResponse.json({ 
         error: 'Brak uprawnień',
-        debug: {
-          sessionId: session.user?.id,
-          adminFound: !!admin,
-          adminEmail: admin?.email,
-          expectedEmail: 'orzech363@gmail.com',
-        }
       }, { status: 403 });
     }
 
-    const { name, email, password } = await req.json();
+    const { name, email, password, removeAvatar } = await req.json();
     const userId = params.id;
 
     const updateData: any = {};
+
+    if (removeAvatar === true) {
+      updateData.image = null;
+    }
 
     // Sprawdź czy email jest unikalny (jeśli się zmienia)
     if (email) {

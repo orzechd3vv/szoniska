@@ -1,151 +1,85 @@
 'use client';
 
-import Link from 'next/link';
-import { FaArrowLeft, FaDiscord, FaEnvelope } from 'react-icons/fa';
 import { motion } from 'framer-motion';
+import { FaEnvelope, FaChevronLeft, FaHeadset } from 'react-icons/fa';
+import Link from 'next/link';
 
 export default function KontaktPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-blue-900 py-12 px-4">
-      <div className="max-w-4xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.3 }}
+    <div className="min-h-screen bg-[#020202] py-32 px-6 relative overflow-hidden">
+      {/* Background Glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-primary-900/10 blur-[120px] rounded-full pointer-events-none" />
+
+      <div className="max-w-4xl mx-auto relative z-10">
+        <Link 
+          href="/" 
+          className="inline-flex items-center gap-2 text-gray-500 hover:text-white transition-colors mb-12 group"
         >
-          <Link 
-            href="/"
-            className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 mb-6 transition-colors"
-          >
-            <FaArrowLeft /> Powrót do strony głównej
-          </Link>
-        </motion.div>
+          <FaChevronLeft className="group-hover:-translate-x-1 transition-transform" />
+          Wróć do strony głównej
+        </Link>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="bg-gradient-to-br from-gray-900 to-black rounded-2xl border border-purple-500/20 p-8 shadow-2xl"
+          className="glass rounded-[3rem] p-12 border border-white/10"
         >
-          <motion.h1
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.4 }}
-            className="text-4xl font-bold text-white mb-2"
-          >
-            Kontakt
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.3, duration: 0.4 }}
-            className="text-gray-400 mb-8"
-          >
-            Masz pytania? Skontaktuj się z nami!
-          </motion.p>
+          <div className="flex items-center gap-6 mb-12">
+            <div className="w-16 h-16 rounded-2xl bg-primary-500/10 flex items-center justify-center text-primary-500">
+              <FaHeadset size={32} />
+            </div>
+            <div>
+              <h1 className="text-5xl font-black text-white mb-2 tracking-tighter">Kontakt</h1>
+              <p className="text-gray-500 font-bold uppercase tracking-widest text-sm">Centrum pomocy i wsparcia</p>
+            </div>
+          </div>
 
-          <div className="space-y-8">
-            <motion.section
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.4, duration: 0.5 }}
-              className="bg-gray-800/50 rounded-xl p-6 border border-purple-500/20"
+          <div className="flex justify-center mb-16">
+            {/* Email Section */}
+            <motion.div 
+              whileHover={{ y: -5 }}
+              className="glass rounded-[2.5rem] p-12 border-white/5 bg-white/[0.02] flex flex-col items-center text-center group max-w-md w-full"
             >
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-purple-600 rounded-full flex items-center justify-center">
-                  <FaDiscord size={24} className="text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-white">Discord</h2>
-                  <p className="text-gray-400">Najszybszy sposób kontaktu</p>
-                </div>
+              <div className="w-20 h-20 rounded-2xl bg-primary-500/10 flex items-center justify-center text-primary-500 mb-8 shadow-xl group-hover:scale-110 transition-transform">
+                <FaEnvelope size={40} />
               </div>
-              <p className="text-gray-300 mb-4">
-                Dołącz do naszego serwera Discord, aby zadać pytanie lub zgłosić problem. 
-                Nasz zespół moderatorów jest tam dostępny i chętnie pomoże!
-              </p>
-              <a
-                href="https://discord.gg/szoniska"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors"
-              >
-                <FaDiscord /> Dołącz do Discorda
-              </a>
-            </motion.section>
-
-            <motion.section
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.5, duration: 0.5 }}
-              className="bg-gray-800/50 rounded-xl p-6 border border-purple-500/20"
-            >
-              <div className="flex items-center gap-4 mb-4">
-                <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
-                  <FaEnvelope size={24} className="text-white" />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-bold text-white">E-mail</h2>
-                  <p className="text-gray-400">Oficjalny kanał komunikacji</p>
-                </div>
-              </div>
-              <p className="text-gray-300 mb-4">
-                W sprawach formalnych lub bardziej szczegółowych możesz napisać do nas na e-mail.
+              <h3 className="text-2xl font-black text-white uppercase tracking-tight mb-3">E-mail</h3>
+              <p className="text-gray-400 text-sm mb-10 leading-relaxed uppercase tracking-wider">
+                Współpraca, sprawy formalne, pomoc techniczna i odwołania od blokad. Odpowiadamy do 24h.
               </p>
               <a
                 href="mailto:kontakt@szoniska.pl"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
+                className="w-full py-5 bg-primary-600 hover:bg-primary-500 text-white font-black text-[11px] uppercase tracking-[0.3em] rounded-2xl shadow-lg shadow-primary-900/20 transition-all"
               >
-                <FaEnvelope /> kontakt@szoniska.pl
+                NAPISZ WIADOMOŚĆ
               </a>
-            </motion.section>
+            </motion.div>
+          </div>
 
-            <motion.section
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.6, duration: 0.5 }}
-            >
-              <h2 className="text-2xl font-bold text-white mb-4">Najczęściej zadawane pytania</h2>
+          <div className="prose prose-invert max-w-none space-y-12">
+            <section className="space-y-4">
+              <h2 className="text-2xl font-black text-white flex items-center gap-3">
+                <span className="text-primary-500">01.</span> Częste pytania (FAQ)
+              </h2>
               <div className="space-y-4">
-                <details className="bg-gray-800/50 rounded-xl p-4 border border-purple-500/20">
-                  <summary className="text-white font-semibold cursor-pointer">
-                    Jak mogę zgłosić nieodpowiednią treść?
-                  </summary>
-                  <p className="text-gray-300 mt-3">
-                    Skontaktuj się z administratorami poprzez Discord lub użyj funkcji zgłaszania dostępnej przy postach i komentarzach.
-                  </p>
-                </details>
-
-                <details className="bg-gray-800/50 rounded-xl p-4 border border-purple-500/20">
-                  <summary className="text-white font-semibold cursor-pointer">
-                    Dlaczego mój post nie został zaakceptowany?
-                  </summary>
-                  <p className="text-gray-300 mt-3">
-                    Wszystkie posty przechodzą moderację. Jeśli Twój post został odrzucony, prawdopodobnie naruszał regulamin. 
-                    W razie wątpliwości skontaktuj się z moderatorami.
-                  </p>
-                </details>
-
-                <details className="bg-gray-800/50 rounded-xl p-4 border border-purple-500/20">
-                  <summary className="text-white font-semibold cursor-pointer">
-                    Jak mogę usunąć swoje konto?
-                  </summary>
-                  <p className="text-gray-300 mt-3">
-                    Możesz usunąć konto w ustawieniach profilu. Pamiętaj, że ta operacja jest nieodwracalna i wszystkie Twoje dane zostaną trwale usunięte.
-                  </p>
-                </details>
-
-                <details className="bg-gray-800/50 rounded-xl p-4 border border-purple-500/20">
-                  <summary className="text-white font-semibold cursor-pointer">
-                    Otrzymałem ostrzeżenie - co teraz?
-                  </summary>
-                  <p className="text-gray-300 mt-3">
-                    Ostrzeżenia są wydawane za naruszenie regulaminu. Zapoznaj się z powodem ostrzeżenia i staraj się przestrzegać zasad w przyszłości. 
-                    W razie pytań skontaktuj się z moderatorami.
-                  </p>
-                </details>
+                {[
+                  { q: 'Jak zgłosić nieodpowiednią treść?', a: 'Użyj przycisku zgłaszania przy danym poście lub napisz do nas wiadomość e-mail.' },
+                  { q: 'Ile trwa weryfikacja posta?', a: 'Zazwyczaj od kilku minut do paru godzin, w zależności od pory dnia.' },
+                  { q: 'Czy moje dane są bezpieczne?', a: 'Tak, wszystkie media są szyfrowane, a dane przetwarzamy zgodnie z RODO.' }
+                ].map((item, i) => (
+                  <div key={i} className="p-6 rounded-2xl bg-white/[0.03] border border-white/5">
+                    <h4 className="text-white font-black text-sm uppercase tracking-widest mb-2">{item.q}</h4>
+                    <p className="text-gray-400 text-sm leading-relaxed">{item.a}</p>
+                  </div>
+                ))}
               </div>
-            </motion.section>
+            </section>
+
+            <div className="mt-16 p-8 bg-white/5 rounded-3xl border border-white/10">
+              <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest text-center">
+                Wsparcie techniczne: Pon-Pt 9:00 - 17:00 (E-mail) • Biuro: kontakt@szoniska.pl
+              </p>
+            </div>
           </div>
         </motion.div>
       </div>

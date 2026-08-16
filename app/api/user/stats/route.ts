@@ -18,42 +18,30 @@ export async function GET(req: NextRequest) {
         createdAt: true,
         isBlocked: true,
         isRestricted: true,
+        reputation: true,
       },
     });
 
-    const postsCount = await prisma.post.count({
-      where: { userId: session.user.id },
-    });
-
-    const approvedPosts = await prisma.post.count({
-      where: {
-        userId: session.user.id,
-        status: 'APPROVED',
-      },
-    });
-
-    const pendingPosts = await prisma.post.count({
-      where: {
-        userId: session.user.id,
-        status: 'PENDING',
-      },
-    });
-
-    const rejectedPosts = await prisma.post.count({
-      where: {
-        userId: session.user.id,
-        status: 'REJECTED',
-      },
-    });
+    const [postsCount, approvedPosts, pendingPosts, rejectedPosts] = await Promise.all([
+      prisma.post.count({ where: { userId: session.user.id } }),
+      prisma.post.count({ where: { userId: session.user.id, status: 'APPROVED' } }),
+      prisma.post.count({ where: { userId: session.user.id, status: 'PENDING' } }),
+      prisma.post.count({ where: { userId: session.user.id, status: 'REJECTED' } }),
+    ]);
 
     return NextResponse.json({
       postsCount,
       approvedPosts,
       pendingPosts,
       rejectedPosts,
+      reputation: user?.reputation || 0,
       createdAt: user?.createdAt,
       isBlocked: user?.isBlocked || false,
       isRestricted: user?.isRestricted || false,
+    }, {
+      headers: {
+        'Cache-Control': 'no-store, max-age=0',
+      },
     });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 });

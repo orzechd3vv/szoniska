@@ -2,13 +2,17 @@
 
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { FaSearch, FaTimes, FaThumbtack } from 'react-icons/fa';
 import PostCard from './PostCard';
 import PostModal from './PostModal';
 import type { Post } from '@/types/post';
 
-export default function PostFeed() {
+interface PostFeedProps {
+  filter?: 'latest' | 'popular';
+}
+
+export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
   const { data: session } = useSession();
   const [posts, setPosts] = useState<Post[]>([]);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
@@ -19,12 +23,14 @@ export default function PostFeed() {
 
   useEffect(() => {
     fetchPosts();
-  }, []);
+  }, [filter]);
 
   const fetchPosts = async (search?: string) => {
     setSearching(true);
     try {
-      const url = search ? `/api/posts?search=${encodeURIComponent(search)}` : '/api/posts';
+      const url = search 
+        ? `/api/posts?search=${encodeURIComponent(search)}&filter=${filter}` 
+        : `/api/posts?filter=${filter}`;
       const res = await fetch(url);
       
       if (res.status === 403) {
@@ -118,42 +124,64 @@ export default function PostFeed() {
 
   return (
     <>
-      {/* Wyszukiwarka */}
+      {/* Nowoczesna Wyszukiwarka */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gray-900/50 rounded-xl p-4 border border-purple-500/20 mb-6"
+        className="mb-16"
       >
-        <form onSubmit={handleSearch} className="flex gap-3">
-          <div className="relative flex-1">
-            <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Szukaj po tytule, nicku autora lub Discord ID..."
-              className="w-full bg-gray-800 text-white pl-11 pr-10 py-3 rounded-lg border border-purple-500/30 focus:border-purple-500 focus:outline-none transition-colors"
-            />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={handleClearSearch}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
-              >
-                <FaTimes />
-              </button>
-            )}
+        <div className="relative group">
+          {/* Decorative Glow */}
+          <div className="absolute -inset-1 bg-gradient-to-r from-primary-600/20 to-blue-600/20 rounded-[2.5rem] blur-2xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
+          
+          <div className="relative glass rounded-[2.5rem] border-white/5 p-2 flex flex-col md:flex-row gap-3">
+            <form onSubmit={handleSearch} className="flex-1 flex items-center gap-4 px-6 py-1">
+              <FaSearch className="text-gray-500 group-focus-within:text-primary-500 transition-colors" size={20} />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Szukaj po tytule lub autorze..."
+                className="flex-1 bg-transparent text-white py-4 text-sm font-bold placeholder:text-gray-600 focus:outline-none"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/5 rounded-full transition-all"
+                >
+                  <FaTimes />
+                </button>
+              )}
+            </form>
+            
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              disabled={searching}
+              className="md:w-48 px-8 py-4 bg-primary-600 hover:bg-primary-500 disabled:bg-gray-800 text-white font-black text-[10px] uppercase tracking-[0.3em] rounded-[2rem] transition-all shadow-lg shadow-primary-900/20"
+            >
+              {searching ? 'Szukam...' : 'Wyszukaj'}
+            </motion.button>
           </div>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            type="submit"
-            disabled={searching}
-            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 text-white font-semibold rounded-lg transition-colors disabled:cursor-not-allowed"
-          >
-            {searching ? 'Szukam...' : 'Szukaj'}
-          </motion.button>
-        </form>
+        </div>
+
+        {/* Popular Tags / Quick Filter Hint */}
+        <div className="flex flex-wrap gap-4 mt-6 px-6">
+          <span className="text-[10px] text-gray-600 font-black uppercase tracking-widest">Szybkie filtry:</span>
+          {['najnowsze', 'popularne', 'przypięte'].map((tag) => (
+            <button 
+              key={tag}
+              onClick={() => {
+                if (tag === 'najnowsze') fetchPosts();
+              }}
+              className="text-[9px] text-gray-500 hover:text-primary-400 font-black uppercase tracking-widest transition-colors"
+            >
+              #{tag}
+            </button>
+          ))}
+        </div>
       </motion.div>
 
       {posts.length === 0 ? (
@@ -166,13 +194,22 @@ export default function PostFeed() {
           <p className="text-gray-500">Spróbuj zmienić kryteria wyszukiwania</p>
         </motion.div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={filter}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+        >
           {posts.map((post, index) => (
             <motion.div
               key={post.id}
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: index * 0.1 }}
+              layout
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.4, delay: index * 0.05 }}
               className="relative"
             >
               {post.isPinned && (
@@ -202,7 +239,8 @@ export default function PostFeed() {
               )}
             </motion.div>
           ))}
-        </div>
+        </motion.div>
+      </AnimatePresence>
       )}
 
       {selectedPost && (

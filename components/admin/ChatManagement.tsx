@@ -12,7 +12,6 @@ interface ChatMessage {
     id: string;
     name: string;
     image?: string;
-    discordUsername?: string;
   };
 }
 
@@ -201,11 +200,6 @@ export default function ChatManagement() {
                         <span className="text-white font-semibold">
                           {message.user.name}
                         </span>
-                        {message.user.discordUsername && (
-                          <span className="text-gray-400 text-sm">
-                            @{message.user.discordUsername}
-                          </span>
-                        )}
                         <span className="text-gray-400 text-sm">
                           {formatDate(message.createdAt)}
                         </span>

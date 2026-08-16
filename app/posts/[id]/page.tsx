@@ -2,9 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
-import { FaArrowLeft, FaUser, FaCalendarAlt, FaExclamationTriangle, FaTrash, FaFacebook, FaInstagram, FaTiktok } from 'react-icons/fa';
+import { motion, AnimatePresence } from 'framer-motion';
+import { FaArrowLeft, FaUserSecret, FaCalendarAlt, FaExclamationTriangle, FaTrash, FaFacebook, FaInstagram, FaTiktok, FaShareAlt, FaPlus, FaComments, FaHistory, FaShieldAlt, FaCheck, FaShare } from 'react-icons/fa';
 import { useSession } from 'next-auth/react';
+import VideoPlayer from '@/components/VideoPlayer';
+import CommentSection from '@/components/CommentSection';
 
 interface Post {
   id: string;
@@ -18,7 +20,7 @@ interface Post {
   createdAt: string;
   isAnonymous?: boolean;
   user: {
-    id: string;
+    id?: string;
     name: string;
     image?: string;
   };
@@ -36,6 +38,9 @@ export default function PostPage() {
   const [post, setPost] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  const [isExiting, setIsExiting] = useState(false);
+  const [isCopied, setIsCopied] = useState(false);
 
   useEffect(() => {
     fetchPost();
@@ -57,266 +62,281 @@ export default function PostPage() {
     }
   };
 
-  const handleDeleteWarning = async (warningId: string) => {
-    if (!confirm('Czy na pewno chcesz usunąć to ostrzeżenie?')) return;
+  const handleBack = () => {
+    setIsExiting(true);
+    setTimeout(() => {
+      router.push('/');
+    }, 600);
+  };
 
-    try {
-      const res = await fetch(`/api/admin/posts/${params.id}/warnings/${warningId}`, {
-        method: 'DELETE',
-      });
-      if (res.ok) {
-        fetchPost();
-      }
-    } catch (error) {
-      console.error('Error:', error);
-    }
+  const handleShare = () => {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-blue-900 flex items-center justify-center">
-        <div className="text-white text-xl">Ładowanie...</div>
+      <div className="min-h-screen bg-[#020202] flex items-center justify-center">
+        <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: 'linear' }} className="w-16 h-16 border-4 border-primary-500 border-t-transparent rounded-full" />
       </div>
     );
   }
 
   if (error || !post) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-blue-900 flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl text-white mb-4">{error || 'Nie znaleziono posta'}</h1>
-          <button
-            onClick={() => router.back()}
-            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg text-white font-semibold transition-colors"
-          >
-            <FaArrowLeft className="inline mr-2" />
-            Powrót
-          </button>
+      <div className="min-h-screen bg-[#020202] flex items-center justify-center p-6 text-center">
+        <div className="space-y-8 max-w-md mx-auto">
+          <FaExclamationTriangle className="text-red-500 text-6xl mx-auto" />
+          <h1 className="text-3xl font-black text-white uppercase">{error || 'Post nie istnieje'}</h1>
+          <button onClick={() => router.push('/')} className="btn-primary px-8 py-4 w-full">Wróć na stronę główną</button>
         </div>
       </div>
     );
   }
 
+  const allMedia = [
+    ...(post.videos || []).map(url => ({ type: 'video' as const, url })),
+    ...(post.images || []).map(url => ({ type: 'image' as const, url }))
+  ];
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-black to-blue-900 py-12 px-4">
-      <div className="max-w-4xl mx-auto">
-        <button
-          onClick={() => router.back()}
-          className="mb-6 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-white font-semibold transition-colors flex items-center gap-2"
-        >
-          <FaArrowLeft />
-          Powrót
-        </button>
+    <div className="min-h-screen bg-[#020202] text-white selection:bg-primary-500/30 overflow-x-hidden">
+      {/* Cinematic Background Blur */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none opacity-20">
+        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-600 blur-[150px] rounded-full animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-600 blur-[150px] rounded-full animate-pulse-slow" />
+      </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-gray-900 border border-purple-500/30 rounded-2xl p-8"
-        >
-          {/* Header */}
-          <h1 className="text-3xl font-bold text-white mb-6">{post.title}</h1>
-
-          {/* Author Info */}
-          <div className="flex items-center gap-3 mb-6 pb-6 border-b border-gray-700">
-            {post.isAnonymous ? (
-              <>
-                <img
-                  src="/logo.png"
-                  alt="Anonimowy"
-                  className="w-12 h-12 rounded-full border-2 border-purple-500"
-                />
-                <div>
-                  <p className="text-white font-semibold flex items-center gap-2">
-                    <FaUser className="text-purple-400" />
-                    Anonimowy
-                  </p>
-                  <p className="text-gray-400 text-sm flex items-center gap-2">
-                    <FaCalendarAlt />
-                    {new Date(post.createdAt).toLocaleString('pl-PL')}
-                  </p>
-                </div>
-              </>
-            ) : (
-              <>
-                {post.user.image ? (
-                  <img
-                    src={post.user.image}
-                    alt={post.user.name}
-                    className="w-12 h-12 rounded-full border-2 border-purple-500"
-                  />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-white text-lg font-bold border-2 border-purple-500">
-                    {post.user.name.charAt(0).toUpperCase()}
-                  </div>
-                )}
-                <div>
-                  <p className="text-white font-semibold flex items-center gap-2">
-                    <FaUser className="text-purple-400" />
-                    {post.user.name}
-                  </p>
-                  <p className="text-gray-400 text-sm flex items-center gap-2">
-                    <FaCalendarAlt />
-                    {new Date(post.createdAt).toLocaleString('pl-PL')}
-                  </p>
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Content */}
-          <div className="mb-8">
-            <p className="text-gray-300 whitespace-pre-wrap text-lg">{post.description}</p>
-          </div>
-
-          {/* Videos Gallery */}
-          {post.videos && post.videos.length > 0 && (
-            <div className="mb-8">
-              <h3 className="text-white font-semibold mb-4 text-lg">Filmy</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {post.videos.map((video, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="relative rounded-xl overflow-hidden border-2 border-purple-500/30 hover:border-purple-500 transition-colors bg-black"
-                  >
-                    <video
-                      src={video}
-                      controls
-                      className="w-full h-auto object-contain"
-                    />
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Images Gallery */}
-          {post.images && post.images.length > 0 && (
-            <div className="mb-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {post.images.map((image, index) => (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="relative rounded-xl overflow-hidden border-2 border-purple-500/30 hover:border-purple-500 transition-colors"
-                  >
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95, filter: 'blur(20px)' }}
+        animate={isExiting ? { opacity: 0, scale: 0.9, filter: 'blur(30px)', y: 20 } : { opacity: 1, scale: 1, filter: 'blur(0px)', y: 0 }}
+        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10"
+      >
+        {/* IDENTICAL HEADER TO MAIN PAGE - TRANSPARENT */}
+        <header className="w-full py-6 bg-transparent">
+          <div className="max-w-8xl mx-auto px-12">
+            <div className="flex items-center justify-between">
+              {/* Logo / Back Link */}
+              <div onClick={handleBack} className="flex items-center gap-6 cursor-pointer group">
+                <div className="flex items-center gap-4">
+                  <div className="relative w-12 h-12 glass rounded-2xl flex items-center justify-center overflow-hidden border-primary-500/30">
                     <img
-                      src={image}
-                      alt={`${post.title} - zdjęcie ${index + 1}`}
-                      className="w-full h-auto object-cover"
+                      src="/logo.png"
+                      alt="Logo"
+                      className="w-8 h-8 object-contain drop-shadow-[0_0_8px_rgba(100,17,255,0.5)]"
                     />
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Social Media Links */}
-          {(post.facebookUrl || post.instagramUrl || post.tiktokUrl) && (
-            <div className="mb-8 p-6 bg-gray-800/50 rounded-xl border border-purple-500/20">
-              <h3 className="text-white font-semibold mb-4 text-lg">Linki do social media</h3>
-              <div className="flex flex-wrap gap-3">
-                {post.facebookUrl && (
-                  <a
-                    href={post.facebookUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white font-semibold transition-colors"
-                  >
-                    <FaFacebook size={20} />
-                    Facebook
-                  </a>
-                )}
-                {post.instagramUrl && (
-                  <a
-                    href={post.instagramUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 rounded-lg text-white font-semibold transition-colors"
-                  >
-                    <FaInstagram size={20} />
-                    Instagram
-                  </a>
-                )}
-                {post.tiktokUrl && (
-                  <a
-                    href={post.tiktokUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-4 py-2 bg-black hover:bg-gray-900 rounded-lg text-white font-semibold transition-colors border border-white/20"
-                  >
-                    <FaTiktok size={20} />
-                    TikTok
-                  </a>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Warnings */}
-          {post.warnings && post.warnings.length > 0 && (
-            <div className="bg-gradient-to-r from-yellow-900/30 to-red-900/30 border-2 border-yellow-500/50 rounded-xl p-6 shadow-lg">
-              <div className="flex items-center gap-3 mb-5">
-                <div className="p-3 bg-yellow-500/20 rounded-full">
-                  <FaExclamationTriangle className="text-yellow-400 text-xl" />
+                  </div>
+                  <div className="flex flex-col">
+                    <h1 className="text-2xl font-black tracking-tighter text-white leading-none uppercase">
+                      SZONISKA<span className="text-primary-500">.</span>
+                    </h1>
+                    <span className="text-[10px] uppercase tracking-[0.3em] text-gray-500 font-bold">Content</span>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-yellow-400 font-bold text-xl">
-                    Ostrzeżenia Administratora
-                  </h3>
-                  <p className="text-gray-400 text-sm">
-                    Ten post otrzymał {post.warnings.length} {post.warnings.length === 1 ? 'ostrzeżenie' : 'ostrzeżeń'}
-                  </p>
+
+                <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 text-gray-500 group-hover:text-white transition-all ml-4 border border-white/5">
+                  <FaArrowLeft className="group-hover:-translate-x-1 transition-transform text-[10px]" />
+                  <span className="text-[10px] font-black uppercase tracking-widest">Powrót</span>
                 </div>
               </div>
-              <div className="space-y-3">
-                {post.warnings.map((warning, index) => (
-                  <motion.div
-                    key={warning.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="bg-gray-900/70 backdrop-blur-sm rounded-lg p-4 border border-yellow-500/30 hover:border-yellow-500/50 transition-colors"
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="px-2 py-1 bg-yellow-500/20 rounded text-yellow-400 text-xs font-semibold">
-                            Ostrzeżenie #{index + 1}
-                          </span>
-                          <span className="text-gray-500 text-xs">
-                            {new Date(warning.createdAt).toLocaleDateString('pl-PL', {
-                              day: 'numeric',
-                              month: 'long',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit'
-                            })}
-                          </span>
+
+              <div className="flex items-center gap-6">
+                {/* Share Button with Animation & Border */}
+                <motion.button
+                  onClick={handleShare}
+                  initial={false}
+                  animate={{
+                    backgroundColor: isCopied ? '#22c55e' : 'rgba(100, 17, 255, 0.2)',
+                    borderColor: isCopied ? '#4ade80' : 'rgba(255, 255, 255, 0.1)',
+                    scale: isCopied ? 1.05 : 1
+                  }}
+                  className="relative flex items-center justify-center gap-4 px-10 py-3.5 text-white rounded-2xl transition-all shadow-lg overflow-hidden min-w-[180px] border-2 backdrop-blur-md"
+                >
+                  <AnimatePresence mode="wait">
+                    {isCopied ? (
+                      <motion.div
+                        key="copied"
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: -20, opacity: 0 }}
+                        className="flex items-center gap-2 font-mono"
+                      >
+                        <FaCheck className="text-sm" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Skopiowano</span>
+                      </motion.div>
+                    ) : (
+                      <motion.div
+                        key="share"
+                        initial={{ y: 20, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: -20, opacity: 0 }}
+                        className="flex items-center gap-4 font-mono"
+                      >
+                        <FaShare className="text-sm" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.2em]">Udostępnij</span>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.button>
+
+                {session ? (
+                  <div className="flex items-center gap-3 px-3 py-2 glass rounded-2xl border-white/10">
+                    <div className="relative">
+                      {session.user?.image ? (
+                        <img
+                          src={session.user.image}
+                          alt="Profile"
+                          className="w-9 h-9 rounded-xl object-cover border border-primary-500/50"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-xl bg-primary-600 flex items-center justify-center text-white font-black border border-primary-500/50">
+                          {session.user?.name?.charAt(0).toUpperCase()}
                         </div>
-                        <p className="text-white text-base leading-relaxed">{warning.message}</p>
-                      </div>
-                      {session?.user && (
-                        <button
-                          onClick={() => handleDeleteWarning(warning.id)}
-                          className="ml-4 p-2 hover:bg-red-600/30 rounded-lg transition-colors group"
-                          title="Usuń ostrzeżenie"
-                        >
-                          <FaTrash className="text-red-400 group-hover:text-red-300" size={16} />
-                        </button>
                       )}
                     </div>
-                  </motion.div>
-                ))}
+                    <div className="flex flex-col items-start hidden sm:flex pr-2">
+                      <span className="text-xs font-black text-white truncate max-w-[100px]">
+                        {session.user?.name}
+                      </span>
+                      <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider">
+                        {session.user?.isAdmin ? 'Administrator' : 'Użytkownik'}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <button className="btn-primary py-2.5 px-8 text-sm">Zaloguj się</button>
+                )}
               </div>
             </div>
-          )}
-        </motion.div>
-      </div>
+          </div>
+        </header>
+
+        <div className="max-w-8xl mx-auto px-12 py-12">
+          <div className="flex flex-col lg:flex-row gap-16">
+            {/* Left Column: Media Gallery */}
+            <div className="lg:w-[60%] space-y-8">
+              <div className="relative aspect-video glass rounded-[3rem] overflow-hidden border-white/10 bg-black shadow-[0_0_100px_rgba(0,0,0,0.8)] group/media">
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentMediaIndex}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="w-full h-full"
+                  >
+                    {allMedia[currentMediaIndex]?.type === 'video' ? (
+                      <VideoPlayer src={allMedia[currentMediaIndex].url} className="w-full h-full" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center p-4">
+                        <img src={allMedia[currentMediaIndex]?.url} className="max-w-full max-h-full object-contain rounded-2xl" alt="" />
+                      </div>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
+
+                {/* Media Counter Overlay - Hidden unless hovering */}
+                {allMedia.length > 1 && (
+                  <div className="absolute top-8 left-1/2 -translate-x-1/2 px-6 py-2 glass rounded-full border-white/10 text-white text-[10px] font-black uppercase tracking-widest z-[110] opacity-0 group-hover/media:opacity-100 transition-opacity duration-500">
+                    {currentMediaIndex + 1} <span className="text-gray-600 mx-2">/</span> {allMedia.length}
+                  </div>
+                )}
+
+                {/* Navigation Thumbnails - Hidden unless hovering */}
+                {allMedia.length > 1 && (
+                  <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-3 p-3 glass rounded-3xl border-white/10 z-20 overflow-x-auto max-w-[90%] scrollbar-hide opacity-0 group-hover/media:opacity-100 translate-y-4 group-hover/media:translate-y-0 transition-all duration-500">
+                    {allMedia.map((media) => (
+                      <button
+                        key={media.url}
+                        onClick={() => setCurrentMediaIndex(allMedia.indexOf(media))}
+                        className={`w-16 h-16 rounded-xl overflow-hidden border-2 transition-all shrink-0 ${currentMediaIndex === allMedia.indexOf(media) ? 'border-primary-500 scale-105' : 'border-transparent opacity-50 hover:opacity-100'}`}
+                      >
+                        {media.type === 'video' ? (
+                          <video src={media.url} className="w-full h-full object-cover" />
+                        ) : (
+                          <img src={media.url} className="w-full h-full object-cover" alt="" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Right Column: Info & Discussion */}
+            <div className="lg:w-[40%] space-y-10">
+              <div className="space-y-6">
+                <div className="flex items-center gap-5">
+                  <div className="w-16 h-16 rounded-2xl relative shrink-0">
+                    {post.isAnonymous ? (
+                      <div className="w-full h-full bg-gray-900 flex items-center justify-center text-gray-400 rounded-2xl border border-white/10">
+                        <FaUserSecret size={28} />
+                      </div>
+                    ) : (
+                      post.user.image ? (
+                        <img src={post.user.image} className="w-full h-full object-cover rounded-2xl border border-white/10" alt="" />
+                      ) : (
+                        <div className="w-full h-full bg-primary-600 flex items-center justify-center text-white font-black text-2xl rounded-2xl border border-white/10 uppercase">
+                          {post.user.name.charAt(0)}
+                        </div>
+                      )
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-black text-white tracking-tighter uppercase italic leading-none mb-3">
+                      {post.isAnonymous ? 'Użytkownik Anonimowy' : post.user.name}
+                    </h3>
+                    <div className="flex items-center gap-4">
+                      <span className="flex items-center gap-2 text-[10px] text-gray-500 font-black uppercase tracking-widest">
+                        <FaCalendarAlt className="text-primary-500/50" /> {new Date(post.createdAt).toLocaleDateString('pl-PL')}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <h1 className="text-8xl font-black text-white tracking-tighter uppercase italic leading-[0.85]">{post.title}</h1>
+                <p className="text-gray-400 text-lg leading-relaxed font-medium whitespace-pre-wrap">{post.description}</p>
+              </div>
+
+              {/* Socials */}
+              {(post.facebookUrl || post.instagramUrl || post.tiktokUrl) && (
+                <div className="flex flex-wrap gap-3">
+                  {post.facebookUrl && <SocialButton icon={<FaFacebook />} label="Facebook" url={post.facebookUrl} color="bg-[#1877F2]" />}
+                  {post.instagramUrl && <SocialButton icon={<FaInstagram />} label="Instagram" url={post.instagramUrl} color="bg-gradient-to-br from-[#833AB4] via-[#FD1D1D] to-[#F77737]" />}
+                  {post.tiktokUrl && <SocialButton icon={<FaTiktok />} label="TikTok" url={post.tiktokUrl} color="bg-black border border-white/20" />}
+                </div>
+              )}
+
+              {/* Discussion Section */}
+              <div className="pt-12 border-t border-white/5 space-y-10">
+                <div className="flex items-center gap-4">
+                  <div className="w-1.5 h-6 bg-primary-600 rounded-full" />
+                  <h3 className="text-[11px] text-white font-black uppercase tracking-[0.4em]">Sekcja Komentarzy</h3>
+                </div>
+                <CommentSection postId={post.id} />
+              </div>
+            </div>
+          </div>
+        </div>
+      </motion.div>
     </div>
+  );
+}
+
+function SocialButton({ icon, label, url, color }: any) {
+  return (
+    <motion.a
+      whileHover={{ scale: 1.05, y: -2 }}
+      whileTap={{ scale: 0.95 }}
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`flex items-center gap-4 px-6 py-4 rounded-[1.5rem] text-white transition-all shadow-xl ${color}`}
+    >
+      {icon}
+      <span className="text-[11px] font-black uppercase tracking-widest">{label}</span>
+    </motion.a>
   );
 }

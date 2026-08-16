@@ -10,8 +10,7 @@ Skopiuj .env.example do .env i uzupełnij:
 - DATABASE_URL - connection string do MongoDB
 - NEXTAUTH_SECRET - wygeneruj: openssl rand -base64 32
 - GOOGLE_CLIENT_ID i GOOGLE_CLIENT_SECRET - z Google Cloud Console
-- DISCORD_CLIENT_ID i DISCORD_CLIENT_SECRET - z Discord Developer Portal
-- ADMIN_DISCORD_IDS - Discord ID administratorów (oddzielone przecinkami)
+- ADMIN_EMAILS - e-maile administratorów (oddzielone przecinkami)
 
 ### 3. Zainicjuj bazę danych
 npx prisma generate
@@ -28,28 +27,20 @@ npm run dev
 3. APIs & Services → Credentials → Create OAuth 2.0 Client ID
 4. Authorized redirect URIs: https://www.szoniska.pl/api/auth/callback/google
 
-### Discord OAuth:
-1. https://discord.com/developers/applications
-2. New Application
-3. OAuth2 → Add Redirect: https://www.szoniska.pl/api/auth/callback/discord
-4. W Settings → Bot możesz dodać bota (opcjonalnie)
 
-### Znajdowanie Discord ID:
-1. Discord → Ustawienia → Zaawansowane → Tryb dewelopera (włącz)
-2. Prawy przycisk na swoim profilu → Kopiuj ID użytkownika
 
 ## Testowanie
 
 ### Jako użytkownik:
-1. Zaloguj się (Discord/Google)
+1. Zaloguj się (Google)
 2. Idź do Profil → Posty → Utwórz post
 3. Wypełnij formularz (tytuł, opis, zdjęcia, social media)
 4. Wyślij (status: Weryfikowanie)
 
 ### Jako administrator:
-1. Dodaj swoje Discord ID do ADMIN_DISCORD_IDS w .env
+1. Dodaj swój email do ADMIN_EMAILS w .env
 2. Zrestartuj serwer
-3. Zaloguj się przez Discord
+3. Zaloguj się przez Google
 4. W profilu pojawi się zakładka "Panel"
 5. Zatwierdź/odrzuć posty w "Weryfikowanie"
 6. Zarządzaj użytkownikami w "Użytkownicy"

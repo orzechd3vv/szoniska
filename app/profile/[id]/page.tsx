@@ -3,14 +3,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { FaArrowLeft, FaNewspaper, FaExclamationTriangle, FaCalendarAlt, FaDiscord } from 'react-icons/fa';
+import { FaArrowLeft, FaNewspaper, FaExclamationTriangle, FaCalendarAlt } from 'react-icons/fa';
 
 interface User {
   id: string;
   name: string;
   email?: string;
   image?: string;
-  discordUsername?: string;
   createdAt: string;
   isBlocked: boolean;
   isRestricted: boolean;
@@ -105,11 +104,6 @@ export default function UserProfilePage() {
 
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-white mb-2">{user.name}</h1>
-              {user.discordUsername && (
-                <p className="text-purple-400 flex items-center gap-2 mb-2">
-                  <FaDiscord /> {user.discordUsername}
-                </p>
-              )}
               <p className="text-gray-400 flex items-center gap-2">
                 <FaCalendarAlt /> Dołączył {new Date(user.createdAt).toLocaleDateString('pl-PL')}
               </p>

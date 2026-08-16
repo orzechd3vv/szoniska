@@ -43,22 +43,6 @@ To zainstaluje wszystkie wymagane pakiety (Next.js, React, Prisma, NextAuth, Fra
 6. Authorized redirect URIs: `https://www.szoniska.pl/api/auth/callback/google`
 7. Skopiuj Client ID i Client Secret do `.env`
 
-### Discord OAuth:
-
-1. Przejdź do: https://discord.com/developers/applications
-2. Kliknij "New Application"
-3. Podaj nazwę (np. "Szoniska")
-4. W menu: OAuth2
-5. Dodaj Redirect: `https://www.szoniska.pl/api/auth/callback/discord`
-6. Skopiuj Client ID i Client Secret do `.env`
-
-### Znajdź swoje Discord ID (dla admina):
-
-1. Otwórz Discord
-2. Ustawienia → Zaawansowane → Włącz "Tryb dewelopera"
-3. Kliknij prawym na swój awatar → "Kopiuj ID użytkownika"
-4. Wklej do `.env` jako `ADMIN_DISCORD_IDS`
-
 ## ⚙️ Krok 4: Konfiguracja pliku .env
 
 Skopiuj `.env.example` do `.env`:
@@ -80,10 +64,7 @@ NEXTAUTH_SECRET="WYGENERUJ_TUTAJ_LOSOWY_SECRET"
 GOOGLE_CLIENT_ID="twoj-google-client-id"
 GOOGLE_CLIENT_SECRET="twoj-google-client-secret"
 
-DISCORD_CLIENT_ID="twoj-discord-client-id"
-DISCORD_CLIENT_SECRET="twoj-discord-client-secret"
-
-ADMIN_DISCORD_IDS="twoje-discord-id,inne-discord-id"
+ADMIN_EMAILS="twoj-admin-email@gmail.com"
 ```
 
 **Wygeneruj NEXTAUTH_SECRET:**
@@ -151,7 +132,7 @@ $env:PORT=3001; npm run dev
 
 ✅ Czarno-fioletowa kolorystyka
 ✅ Płynne animacje (Framer Motion)
-✅ Logowanie przez Discord/Google
+✅ Logowanie przez Google
 ✅ Tworzenie postów z max 10 zdjęciami
 ✅ Linki do social media (Facebook, Instagram, TikTok)
 ✅ System weryfikacji postów przez admina

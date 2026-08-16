@@ -7,17 +7,17 @@ async function seedUpdates() {
     console.log('🌱 Seeding updates...');
 
     // Get first admin user
-    const adminDiscordIds = process.env.ADMIN_DISCORD_IDS?.split(',') || [];
+    const adminEmails = process.env.ADMIN_EMAILS?.split(',') || [];
     const admin = await prisma.user.findFirst({
       where: {
-        discordId: {
-          in: adminDiscordIds,
+        email: {
+          in: adminEmails,
         },
       },
     });
 
     if (!admin) {
-      console.error('❌ No admin user found. Please set ADMIN_DISCORD_IDS in .env');
+      console.error('❌ No admin user found. Please set ADMIN_EMAILS in .env');
       return;
     }
 
@@ -35,7 +35,7 @@ Funkcje:
 - System komentarzy
 - Panel administratora
 - System ostrzeżeń
-- Autoryzacja przez Discord i email
+- Autoryzacja przez Google i email
 
 Miłego korzystania!`,
         isPinned: true,

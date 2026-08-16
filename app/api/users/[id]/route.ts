@@ -17,7 +17,6 @@ export async function GET(
         name: true,
         email: false, // Nie zwracaj emaila w publicznym profilu
         image: true,
-        discordUsername: true,
         createdAt: true,
         isBlocked: true,
         isRestricted: true,
