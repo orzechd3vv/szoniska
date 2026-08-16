@@ -2,10 +2,13 @@
   "name": "szoniska",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && next build",
-    "start": "prisma db push && next start",
+    "start": "next start",
     "lint": "next lint",
     "postinstall": "prisma generate",
     "seed:updates": "ts-node --compiler-options {\\\"module\\\":\\\"CommonJS\\\"} scripts/seed-updates.ts",
