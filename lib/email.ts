@@ -1,9 +1,14 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+function getResend() {
+  const apiKey = process.env.RESEND_API_KEY || 're_dummy_key_for_build';
+  return new Resend(apiKey);
+}
+
 const fromEmail = process.env.EMAIL_FROM || 'verify@szoniska.pl';
 
 export async function sendVerificationEmail(email: string, token: string, name?: string) {
+  const resend = getResend();
   const verificationUrl = `${process.env.NEXTAUTH_URL}/verify-email?token=${token}`;
 
   const htmlContent = `
@@ -92,6 +97,7 @@ export async function sendVerificationEmail(email: string, token: string, name?:
 }
 
 export async function sendPasswordResetEmail(email: string, token: string, name?: string) {
+  const resend = getResend();
   const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password/${token}`;
 
   const htmlContent = `
