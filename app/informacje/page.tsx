@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { FaInfoCircle, FaCogs, FaHandshake, FaChartBar, FaQuestionCircle, FaShieldAlt, FaUsers, FaFire, FaCrown, FaServer, FaBalanceScale, FaStar, FaUpload } from 'react-icons/fa';
+import { FaInfoCircle, FaCogs, FaHandshake, FaQuestionCircle, FaShieldAlt, FaFire, FaCrown, FaServer, FaBalanceScale, FaStar, FaUpload } from 'react-icons/fa';
 import Link from 'next/link';
 
 export default function InformacjePage() {
@@ -32,7 +32,7 @@ export default function InformacjePage() {
             CENTRUM <span className="text-primary-400">WIEDZY</span>
           </motion.h1>
           <p className="text-gray-300 text-lg sm:text-xl max-w-3xl mx-auto font-medium leading-relaxed">
-            Poznaj architekturę platformy, elitarnych partnerów strategicznych, naocznie zweryfikuj statystyki sieci oraz dowiedz się wszystkiego z bazy FAQ.
+            Poznaj architekturę platformy, elitarnych partnerów strategicznych oraz dowiedz się wszystkiego z bazy FAQ.
           </p>
         </div>
 
@@ -166,42 +166,11 @@ export default function InformacjePage() {
           </div>
         </section>
 
-        {/* 3. STATYSTYKI */}
-        <section className="mb-28">
-          <div className="flex items-center gap-4 mb-12">
-            <div className="w-3.5 h-12 bg-gradient-to-b from-primary-400 to-purple-600 rounded-full shadow-[0_0_25px_rgba(168,85,247,0.9)]" />
-            <h2 className="text-4xl sm:text-5xl font-black uppercase italic tracking-tight">3. Statystyki Sieci</h2>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-            <div className="glass rounded-[2.5rem] p-8 text-center border-white/10 shadow-2xl relative overflow-hidden group">
-              <div className="absolute inset-0 bg-primary-600/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="text-4xl sm:text-6xl font-black text-primary-400 mb-3 text-glow">24.5K+</div>
-              <div className="text-xs font-black uppercase tracking-widest text-gray-300">Aktywnych Użytkowników</div>
-            </div>
-            <div className="glass rounded-[2.5rem] p-8 text-center border-white/10 shadow-2xl relative overflow-hidden group">
-              <div className="absolute inset-0 bg-purple-600/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="text-4xl sm:text-6xl font-black text-purple-400 mb-3 text-glow">120K+</div>
-              <div className="text-xs font-black uppercase tracking-widest text-gray-300">Przetworzonych Postów</div>
-            </div>
-            <div className="glass rounded-[2.5rem] p-8 text-center border-white/10 shadow-2xl relative overflow-hidden group">
-              <div className="absolute inset-0 bg-indigo-600/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="text-4xl sm:text-6xl font-black text-indigo-400 mb-3 text-glow">1.2M+</div>
-              <div className="text-xs font-black uppercase tracking-widest text-gray-300">Miesięcznych Odsłon</div>
-            </div>
-            <div className="glass rounded-[2.5rem] p-8 text-center border-white/10 shadow-2xl relative overflow-hidden group">
-              <div className="absolute inset-0 bg-emerald-600/10 opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="text-4xl sm:text-6xl font-black text-emerald-400 mb-3 text-glow">99.9%</div>
-              <div className="text-xs font-black uppercase tracking-widest text-gray-300">Dostępność Serwera</div>
-            </div>
-          </div>
-        </section>
-
-        {/* 4. NAJCZĘŚCIEJ ZADAWANE PYTANIA (FAQ) */}
+        {/* 3. NAJCZĘŚCIEJ ZADAWANE PYTANIA (FAQ) */}
         <section className="mb-12">
           <div className="flex items-center gap-4 mb-12">
             <div className="w-3.5 h-12 bg-gradient-to-b from-primary-400 to-purple-600 rounded-full shadow-[0_0_25px_rgba(168,85,247,0.9)]" />
-            <h2 className="text-4xl sm:text-5xl font-black uppercase italic tracking-tight">4. Najczęściej Zadawane Pytania (FAQ)</h2>
+            <h2 className="text-4xl sm:text-5xl font-black uppercase italic tracking-tight">3. Najczęściej Zadawane Pytania (FAQ)</h2>
           </div>
 
           <div className="space-y-6">
