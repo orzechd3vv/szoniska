@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { FaInfoCircle, FaCogs, FaHandshake, FaQuestionCircle, FaShieldAlt, FaFire, FaCrown, FaServer, FaBalanceScale, FaStar, FaUpload } from 'react-icons/fa';
+import { FaInfoCircle, FaCogs, FaHandshake, FaQuestionCircle, FaShieldAlt, FaFire, FaCrown, FaServer, FaStar, FaUpload } from 'react-icons/fa';
 import Link from 'next/link';
 
 export default function InformacjePage() {
@@ -95,7 +95,7 @@ export default function InformacjePage() {
             <h2 className="text-4xl sm:text-5xl font-black uppercase italic tracking-tight">2. Partnerzy i Sponsorzy</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             
             {/* MVP Entertainment */}
             <motion.div
@@ -111,33 +111,22 @@ export default function InformacjePage() {
               <h3 className="text-2xl font-black uppercase italic text-white mb-2">MVP Entertainment</h3>
               <p className="text-primary-300 font-extrabold text-xs uppercase tracking-[0.2em] mb-6">Partner Techniczny</p>
               
-              {/* Logo Slot */}
-              <div className="w-full h-32 rounded-2xl bg-black/50 border-2 border-dashed border-primary-500/40 flex flex-col items-center justify-center gap-2 text-gray-400 p-4">
-                <FaUpload className="text-primary-400 animate-bounce" size={20} />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-primary-300">Miejsce na logo partnera</span>
-                <span className="text-[9px] text-gray-500">(.PNG / .SVG wgrasz wkrótce)</span>
-              </div>
-            </motion.div>
-
-            {/* Zyvalis */}
-            <motion.div
-              whileHover={{ y: -5, scale: 1.02 }}
-              className="glass rounded-[3rem] p-10 border-purple-500/40 relative overflow-hidden shadow-[0_20px_60px_rgba(147,51,234,0.25)] bg-gradient-to-b from-purple-950/40 to-transparent flex flex-col items-center text-center"
-            >
-              <div className="absolute top-0 right-0 bg-purple-600 text-white text-[10px] font-black uppercase tracking-widest px-5 py-2 rounded-bl-2xl shadow-lg">
-                Compliance & Legal
-              </div>
-              <div className="w-20 h-20 rounded-3xl bg-purple-500/20 flex items-center justify-center text-purple-300 mb-6 border border-purple-500/50 shadow-[0_0_25px_rgba(147,51,234,0.5)]">
-                <FaBalanceScale size={32} />
-              </div>
-              <h3 className="text-2xl font-black uppercase italic text-white mb-2">Zyvalis</h3>
-              <p className="text-purple-300 font-extrabold text-xs uppercase tracking-[0.2em] mb-6">Partner Prawny</p>
-              
-              {/* Logo Slot */}
-              <div className="w-full h-32 rounded-2xl bg-black/50 border-2 border-dashed border-purple-500/40 flex flex-col items-center justify-center gap-2 text-gray-400 p-4">
-                <FaUpload className="text-purple-400 animate-bounce" size={20} />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-purple-300">Miejsce na logo partnera</span>
-                <span className="text-[9px] text-gray-500">(.PNG / .SVG wgrasz wkrótce)</span>
+              {/* Logo Slot - Użytkownik wrzuca plik mvp.png do folderu public/ */}
+              <div className="w-full h-36 rounded-2xl bg-black/60 border-2 border-dashed border-primary-500/40 flex flex-col items-center justify-center gap-2 text-gray-400 p-4 relative group overflow-hidden">
+                <img 
+                  src="/mvp.png" 
+                  alt="MVP Entertainment" 
+                  className="max-h-full max-w-full object-contain absolute inset-0 m-auto p-2 opacity-95 transition-opacity" 
+                  onError={(e) => {
+                    // Fallback jeśli plik jeszcze nie został wrzucony
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <div className="flex flex-col items-center justify-center gap-1.5 z-10 bg-black/80 w-full h-full absolute inset-0 opacity-100 hover:opacity-0 transition-opacity p-4">
+                  <FaUpload className="text-primary-400 animate-bounce" size={20} />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-primary-300">Wrzuć plik mvp.png do folderu public/</span>
+                  <span className="text-[9px] text-gray-500">Logo wyświetli się automatycznie</span>
+                </div>
               </div>
             </motion.div>
 
@@ -155,11 +144,22 @@ export default function InformacjePage() {
               <h3 className="text-2xl font-black uppercase italic text-white mb-2">777</h3>
               <p className="text-amber-400 font-extrabold text-xs uppercase tracking-[0.2em] mb-6">Główny Sponsor</p>
               
-              {/* Logo Slot */}
-              <div className="w-full h-32 rounded-2xl bg-black/50 border-2 border-dashed border-amber-500/40 flex flex-col items-center justify-center gap-2 text-gray-400 p-4">
-                <FaUpload className="text-amber-400 animate-bounce" size={20} />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-amber-300">Miejsce na logo sponsora</span>
-                <span className="text-[9px] text-gray-500">(.PNG / .SVG wgrasz wkrótce)</span>
+              {/* Logo Slot - Użytkownik wrzuca plik 777.png do folderu public/ */}
+              <div className="w-full h-36 rounded-2xl bg-black/60 border-2 border-dashed border-amber-500/40 flex flex-col items-center justify-center gap-2 text-gray-400 p-4 relative group overflow-hidden">
+                <img 
+                  src="/777.png" 
+                  alt="777 Sponsor" 
+                  className="max-h-full max-w-full object-contain absolute inset-0 m-auto p-2 opacity-95 transition-opacity" 
+                  onError={(e) => {
+                    // Fallback jeśli plik jeszcze nie został wrzucony
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <div className="flex flex-col items-center justify-center gap-1.5 z-10 bg-black/80 w-full h-full absolute inset-0 opacity-100 hover:opacity-0 transition-opacity p-4">
+                  <FaUpload className="text-amber-400 animate-bounce" size={20} />
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-300">Wrzuć plik 777.png do folderu public/</span>
+                  <span className="text-[9px] text-gray-500">Logo wyświetli się automatycznie</span>
+                </div>
               </div>
             </motion.div>
 
