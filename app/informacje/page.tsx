@@ -22,7 +22,7 @@ export default function InformacjePage() {
             className="inline-flex items-center gap-3 px-6 py-3 glass rounded-full border-primary-500/50 mb-8 shadow-[0_0_40px_rgba(168,85,247,0.4)]"
           >
             <FaCrown className="text-amber-400 animate-bounce" size={16} />
-            <span className="text-xs font-black uppercase tracking-[0.3em] text-primary-200">Cyber Hub • Oficjalne Informacje</span>
+            <span className="text-xs font-black uppercase tracking-[0.3em] text-primary-200">Centrum Wiedzy • Oficjalne Informacje</span>
           </motion.div>
           <motion.h1
             initial={{ opacity: 0, y: 25 }}

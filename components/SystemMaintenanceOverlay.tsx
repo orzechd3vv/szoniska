@@ -99,7 +99,7 @@ export default function SystemMaintenanceOverlay() {
         </div>
 
         <div className="flex items-center justify-center gap-2 text-gray-500 text-xs font-bold uppercase tracking-widest">
-          <FaShieldAlt className="text-primary-400" /> Szoniska Cyber Network • Bezpieczna Aktualizacja
+          <FaShieldAlt className="text-primary-400" /> Szoniska • Bezpieczna Aktualizacja
         </div>
       </motion.div>
     </div>

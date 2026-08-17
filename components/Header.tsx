@@ -98,7 +98,7 @@ export default function Header() {
                         {session.user?.name}
                       </span>
                       <span className="text-[10px] text-primary-300 font-extrabold uppercase tracking-wider">
-                        {session.user?.isAdmin ? 'Cyber Admin' : 'Zweryfikowany'}
+                        {session.user?.isAdmin ? 'Administrator' : 'Zweryfikowany'}
                       </span>
                     </div>
                   </motion.button>
@@ -179,7 +179,7 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Announcement Cyber Bar */}
+        {/* Announcement Bar */}
         {!isScrolled && (
           <motion.div 
             initial={{ opacity: 0, y: -10 }}
@@ -189,7 +189,7 @@ export default function Header() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-center gap-3 text-center">
               <span className="w-2 h-2 rounded-full bg-primary-400 animate-ping shrink-0" />
               <span className="text-[10px] font-black text-white uppercase tracking-[0.3em] sm:tracking-[0.45em] text-glow truncate">
-                NOWA ODSŁONA <span className="text-primary-400 mx-1.5">•</span> SZONISKA
+                OFICJALNA ODSŁONA <span className="text-primary-400 mx-1.5">•</span> NOWY WYMIAR
               </span>
               <span className="w-2 h-2 rounded-full bg-primary-400 animate-ping shrink-0" />
             </div>
