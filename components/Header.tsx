@@ -65,7 +65,7 @@ export default function Header() {
                   <h1 className="text-2xl sm:text-3xl font-black tracking-tighter text-white leading-none uppercase italic">
                     SZONISKA<span className="text-primary-400">.</span>
                   </h1>
-                  <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.35em] text-primary-300 font-extrabold mt-1">Cyber Network</span>
+                  <span className="text-[9px] sm:text-[10px] uppercase tracking-[0.35em] text-primary-300 font-extrabold mt-1">Made by MVP</span>
                 </div>
               </motion.div>
             </Link>
