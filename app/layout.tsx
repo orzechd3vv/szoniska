@@ -5,6 +5,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AgeVerificationModal from '@/components/AgeVerificationModal';
 import SecurityProvider from '@/components/SecurityProvider';
+import SystemMaintenanceOverlay from '@/components/SystemMaintenanceOverlay';
 
 export const metadata: Metadata = {
   title: 'Szoniska',
@@ -24,6 +25,7 @@ export default function RootLayout({
       <body>
         <SecurityProvider>
           <Providers>
+            <SystemMaintenanceOverlay />
             <AgeVerificationModal />
             <Header />
             <main className="min-h-screen pt-28">
