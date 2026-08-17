@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { FaBalanceScale, FaEnvelope, FaGlobe, FaBolt } from 'react-icons/fa';
+import { FaBalanceScale, FaEnvelope, FaGlobe, FaInfoCircle } from 'react-icons/fa';
 import { motion } from 'framer-motion';
 
 export default function Footer() {
@@ -42,6 +42,12 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-black text-xs uppercase tracking-[0.35em] mb-6 text-glow">Nawigacja</h3>
             <ul className="space-y-4">
+              <li>
+                <Link href="/informacje" className="group flex items-center gap-3 text-gray-300 hover:text-primary-300 transition-colors text-sm font-bold">
+                  <FaInfoCircle className="text-primary-400" size={16} />
+                  Informacje
+                </Link>
+              </li>
               <li>
                 <Link href="/regulamin" className="group flex items-center gap-3 text-gray-300 hover:text-primary-300 transition-colors text-sm font-bold">
                   <FaBalanceScale className="text-primary-400" size={16} />
