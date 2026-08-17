@@ -109,19 +109,6 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
     );
   }
 
-  if (posts.length === 0 && !searchQuery) {
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center py-20"
-      >
-        <h2 className="text-2xl text-gray-400 mb-4">Brak postów</h2>
-        <p className="text-gray-500">Bądź pierwszy i stwórz post!</p>
-      </motion.div>
-    );
-  }
-
   return (
     <>
       {/* Nowoczesna Wyszukiwarka */}
@@ -134,49 +121,49 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
           {/* Decorative Glow */}
           <div className="absolute -inset-1 bg-gradient-to-r from-primary-600/20 to-blue-600/20 rounded-[2.5rem] blur-2xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
           
-          <div className="relative glass rounded-[2.5rem] border-white/5 p-2 flex flex-col md:flex-row gap-3">
-            <form onSubmit={handleSearch} className="flex-1 flex items-center gap-4 px-6 py-1">
-              <FaSearch className="text-gray-500 group-focus-within:text-primary-500 transition-colors" size={20} />
+          <form onSubmit={handleSearch} className="relative glass rounded-[2.5rem] border-white/10 p-2 flex flex-col md:flex-row gap-3">
+            <div className="flex-1 flex items-center gap-4 px-6 py-1">
+              <FaSearch className="text-gray-400 group-focus-within:text-primary-400 transition-colors" size={20} />
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Szukaj po tytule lub autorze..."
-                className="flex-1 bg-transparent text-white py-4 text-sm font-bold placeholder:text-gray-600 focus:outline-none"
+                className="flex-1 bg-transparent text-white py-4 text-sm font-bold placeholder:text-gray-500 focus:outline-none"
               />
               {searchQuery && (
                 <button
                   type="button"
                   onClick={handleClearSearch}
-                  className="w-10 h-10 flex items-center justify-center text-gray-500 hover:text-white hover:bg-white/5 rounded-full transition-all"
+                  className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-all touch-manipulation"
                 >
                   <FaTimes />
                 </button>
               )}
-            </form>
+            </div>
             
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               type="submit"
               disabled={searching}
-              className="md:w-48 px-8 py-4 bg-primary-600 hover:bg-primary-500 disabled:bg-gray-800 text-white font-black text-[10px] uppercase tracking-[0.3em] rounded-[2rem] transition-all shadow-lg shadow-primary-900/20"
+              className="md:w-48 px-8 py-4 bg-gradient-to-r from-primary-600 to-purple-600 hover:from-primary-500 hover:to-purple-500 disabled:bg-gray-800 text-white font-black text-xs uppercase tracking-[0.25em] rounded-[2rem] transition-all shadow-lg shadow-primary-900/20 touch-manipulation"
             >
               {searching ? 'Szukam...' : 'Wyszukaj'}
             </motion.button>
-          </div>
+          </form>
         </div>
 
         {/* Popular Tags / Quick Filter Hint */}
         <div className="flex flex-wrap gap-4 mt-6 px-6">
-          <span className="text-[10px] text-gray-600 font-black uppercase tracking-widest">Szybkie filtry:</span>
+          <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Szybkie filtry:</span>
           {['najnowsze', 'popularne', 'przypięte'].map((tag) => (
             <button 
               key={tag}
               onClick={() => {
                 if (tag === 'najnowsze') fetchPosts();
               }}
-              className="text-[9px] text-gray-500 hover:text-primary-400 font-black uppercase tracking-widest transition-colors"
+              className="text-[10px] text-gray-400 hover:text-primary-300 font-black uppercase tracking-widest transition-colors"
             >
               #{tag}
             </button>
