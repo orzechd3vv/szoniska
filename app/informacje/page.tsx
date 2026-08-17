@@ -111,22 +111,13 @@ export default function InformacjePage() {
               <h3 className="text-2xl font-black uppercase italic text-white mb-2">MVP Entertainment</h3>
               <p className="text-primary-300 font-extrabold text-xs uppercase tracking-[0.2em] mb-6">Partner Techniczny</p>
               
-              {/* Logo Slot - Użytkownik wrzuca plik mvp.png do folderu public/ */}
-              <div className="w-full h-36 rounded-2xl bg-black/60 border-2 border-dashed border-primary-500/40 flex flex-col items-center justify-center gap-2 text-gray-400 p-4 relative group overflow-hidden">
+              {/* Logo Slot */}
+              <div className="w-full h-36 rounded-2xl bg-black/60 border-2 border-dashed border-primary-500/40 flex items-center justify-center relative overflow-hidden p-2">
                 <img 
                   src="/mvp.png" 
                   alt="MVP Entertainment" 
-                  className="max-h-full max-w-full object-contain absolute inset-0 m-auto p-2 opacity-95 transition-opacity" 
-                  onError={(e) => {
-                    // Fallback jeśli plik jeszcze nie został wrzucony
-                    e.currentTarget.style.display = 'none';
-                  }}
+                  className="max-h-full max-w-full object-contain drop-shadow-[0_0_15px_rgba(168,85,247,0.6)]" 
                 />
-                <div className="flex flex-col items-center justify-center gap-1.5 z-10 bg-black/80 w-full h-full absolute inset-0 opacity-100 hover:opacity-0 transition-opacity p-4">
-                  <FaUpload className="text-primary-400 animate-bounce" size={20} />
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-primary-300">Wrzuć plik mvp.png do folderu public/</span>
-                  <span className="text-[9px] text-gray-500">Logo wyświetli się automatycznie</span>
-                </div>
               </div>
             </motion.div>
 
@@ -144,22 +135,13 @@ export default function InformacjePage() {
               <h3 className="text-2xl font-black uppercase italic text-white mb-2">777</h3>
               <p className="text-amber-400 font-extrabold text-xs uppercase tracking-[0.2em] mb-6">Główny Sponsor</p>
               
-              {/* Logo Slot - Użytkownik wrzuca plik 777.png do folderu public/ */}
-              <div className="w-full h-36 rounded-2xl bg-black/60 border-2 border-dashed border-amber-500/40 flex flex-col items-center justify-center gap-2 text-gray-400 p-4 relative group overflow-hidden">
+              {/* Logo Slot */}
+              <div className="w-full h-36 rounded-2xl bg-black/60 border-2 border-dashed border-amber-500/40 flex items-center justify-center relative overflow-hidden p-2">
                 <img 
-                  src="/777.png" 
+                  src="/777.jpg" 
                   alt="777 Sponsor" 
-                  className="max-h-full max-w-full object-contain absolute inset-0 m-auto p-2 opacity-95 transition-opacity" 
-                  onError={(e) => {
-                    // Fallback jeśli plik jeszcze nie został wrzucony
-                    e.currentTarget.style.display = 'none';
-                  }}
+                  className="max-h-full max-w-full object-contain drop-shadow-[0_0_15px_rgba(245,158,11,0.6)]" 
                 />
-                <div className="flex flex-col items-center justify-center gap-1.5 z-10 bg-black/80 w-full h-full absolute inset-0 opacity-100 hover:opacity-0 transition-opacity p-4">
-                  <FaUpload className="text-amber-400 animate-bounce" size={20} />
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-amber-300">Wrzuć plik 777.png do folderu public/</span>
-                  <span className="text-[9px] text-gray-500">Logo wyświetli się automatycznie</span>
-                </div>
               </div>
             </motion.div>
 
