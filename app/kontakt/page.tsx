@@ -48,7 +48,7 @@ export default function KontaktPage() {
                 Współpraca, sprawy formalne, pomoc techniczna i odwołania od blokad. Odpowiadamy do 24h.
               </p>
               <a
-                href="mailto:kontakt@szoniska.pl"
+                href="mailto:kontakt@szoniska.xyz"
                 className="w-full py-5 bg-primary-600 hover:bg-primary-500 text-white font-black text-[11px] uppercase tracking-[0.3em] rounded-2xl shadow-lg shadow-primary-900/20 transition-all"
               >
                 NAPISZ WIADOMOŚĆ
@@ -77,7 +77,7 @@ export default function KontaktPage() {
 
             <div className="mt-16 p-8 bg-white/5 rounded-3xl border border-white/10">
               <p className="text-gray-500 text-[10px] font-bold uppercase tracking-widest text-center">
-                Wsparcie techniczne: Pon-Pt 9:00 - 17:00 (E-mail) • Biuro: kontakt@szoniska.pl
+                Wsparcie techniczne: Pon-Pt 9:00 - 17:00 (E-mail) • Biuro: kontakt@szoniska.xyz
               </p>
             </div>
           </div>

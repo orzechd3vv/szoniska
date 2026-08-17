@@ -58,8 +58,8 @@ Możesz użyć lokalnej instalacji MongoDB lub MongoDB Atlas (cloud).
 3. Włącz Google+ API
 4. Przejdź do "Credentials" → "Create Credentials" → "OAuth 2.0 Client ID"
 5. Dodaj autoryzowane adresy:
-   - `https://www.szoniska.pl`
-   - `https://www.szoniska.pl/api/auth/callback/google`
+   - `https://www.szoniska.xyz`
+   - `https://www.szoniska.xyz/api/auth/callback/google`
 6. Skopiuj Client ID i Client Secret
 
 ### 4. Utwórz plik .env
@@ -76,7 +76,7 @@ Edytuj `.env`:
 DATABASE_URL="mongodb://localhost:27017/szoniska"
 # lub MongoDB Atlas: "mongodb+srv://username:password@cluster.mongodb.net/szoniska"
 
-NEXTAUTH_URL="https://www.szoniska.pl"
+NEXTAUTH_URL="https://www.szoniska.xyz"
 NEXTAUTH_SECRET="wygeneruj-losowy-secret"  # użyj: openssl rand -base64 32
 
 GOOGLE_CLIENT_ID="twoj-google-client-id"
@@ -106,7 +106,7 @@ npm run build
 npm start
 ```
 
-Aplikacja będzie dostępna pod adresem: https://www.szoniska.pl
+Aplikacja będzie dostępna pod adresem: https://www.szoniska.xyz
 
 ## 📁 Struktura projektu
 

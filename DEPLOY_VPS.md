@@ -7,7 +7,7 @@ Ten przewodnik krok po kroku przeprowadzi Cię przez proces instalacji i konfigu
 ## 🛠️ Wymagania wstępne
 
 1. **Serwer VPS:** Z zainstalowanym systemem **Ubuntu 20.04 LTS lub 22.04 LTS**.
-2. **Domena:** Wykupiona własna domena (np. `szoniska.pl`).
+2. **Domena:** Wykupiona własna domena (np. `szoniska.xyz`).
 3. **Dostęp do serwera:** Klient SSH (np. PuTTY na Windowsie lub wbudowany terminal).
 4. **Baza danych:** Zewnętrzna baza danych MongoDB (np. MongoDB Atlas) skonfigurowana do przyjmowania połączeń produkcyjnych (z wybranymi IP lub `0.0.0.0/0` dla wygody).
 
@@ -20,7 +20,7 @@ Zanim zaczniesz konfigurację na serwerze, musisz skierować swoją domenę na a
 1. Zaloguj się do panelu dostawcy swojej domeny (np. nazwa.pl, home.pl, OVH, Cloudflare).
 2. Przejdź do konfiguracji rekordów DNS.
 3. Dodaj rekord typu **A**:
-   - **Nazwa:** `@` (lub pozostaw puste, oznacza to domenę główną np. `szoniska.pl`)
+   - **Nazwa:** `@` (lub pozostaw puste, oznacza to domenę główną np. `szoniska.xyz`)
    - **Adres IP:** Adres IP Twojego serwera VPS.
 4. (Opcjonalnie) Dodaj rekord typu **A** lub **CNAME** dla subdomeny "www":
    - **Nazwa:** `www`
@@ -96,8 +96,8 @@ Utwórz plik konfiguracyjny środowiska `.env`:
 nano .env
 ```
 Wklej do niego zawartość produkcyjną. Ważne zmiany w `.env` względem testów lokalnych:
-- `NEXTAUTH_URL="https://szoniska.pl"` (Twoja domena produkcyjna ze https)
-- Zaktualizuj ścieżki Redirect URI w ustawieniach konsoli Google, aby kierowały na Twoją domenę (np. `https://szoniska.pl/api/auth/callback/google`).
+- `NEXTAUTH_URL="https://szoniska.xyz"` (Twoja domena produkcyjna ze https)
+- Zaktualizuj ścieżki Redirect URI w ustawieniach konsoli Google, aby kierowały na Twoją domenę (np. `https://szoniska.xyz/api/auth/callback/google`).
 
 Zapisz plik (`Ctrl+O`, `Enter`, następnie `Ctrl+X`).
 
@@ -145,7 +145,7 @@ Wklej poniższą konfigurację (pamiętaj, aby podmienić adres domeny!):
 ```nginx
 server {
     listen 80;
-    server_name szoniska.pl www.szoniska.pl;
+    server_name szoniska.xyz www.szoniska.xyz;
 
     location / {
         proxy_pass http://localhost:3000;
@@ -191,7 +191,7 @@ sudo apt install certbot python3-certbot-nginx -y
 
 Uruchom kreator generowania certyfikatów SSL:
 ```bash
-sudo certbot --nginx -d szoniska.pl -d www.szoniska.pl
+sudo certbot --nginx -d szoniska.xyz -d www.szoniska.xyz
 ```
 - Podaj swój adres e-mail (do powiadomień o odnowieniu).
 - Zaakceptuj regulamin usług ("A").

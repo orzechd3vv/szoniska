@@ -8,8 +8,8 @@ const nextConfig = {
   },
   images: {
     remotePatterns: [
-      { protocol: 'https', hostname: 'www.szoniska.pl' },
-      { protocol: 'https', hostname: 'szoniska.pl' },
+      { protocol: 'https', hostname: 'www.szoniska.xyz' },
+      { protocol: 'https', hostname: 'szoniska.xyz' },
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
       { protocol: 'https', hostname: 'res.cloudinary.com' },
     ],

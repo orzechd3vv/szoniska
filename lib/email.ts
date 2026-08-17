@@ -5,7 +5,7 @@ function getResend() {
   return new Resend(apiKey);
 }
 
-const fromEmail = process.env.EMAIL_FROM || 'verify@szoniska.pl';
+const fromEmail = process.env.EMAIL_FROM || 'verify@szoniska.xyz';
 
 export async function sendVerificationEmail(email: string, token: string, name?: string) {
   const resend = getResend();
@@ -72,7 +72,7 @@ export async function sendVerificationEmail(email: string, token: string, name?:
               <tr>
                 <td style="padding: 40px; background: #111; text-align: center; border-top: 1px solid rgba(255,255,255,0.05);">
                   <p style="color: #475569; font-size: 11px; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">
-                    © ${new Date().getFullYear()} SZONISKA.PL • ZYVALIS GROUP
+                    © ${new Date().getFullYear()} szoniska.xyz • ZYVALIS GROUP
                   </p>
                 </td>
               </tr>
@@ -149,7 +149,7 @@ export async function sendPasswordResetEmail(email: string, token: string, name?
               <tr>
                 <td style="padding: 40px; background: #111; text-align: center; border-top: 1px solid rgba(255,255,255,0.05);">
                   <p style="color: #475569; font-size: 11px; margin: 0; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;">
-                    © ${new Date().getFullYear()} SZONISKA.PL
+                    © ${new Date().getFullYear()} szoniska.xyz
                   </p>
                 </td>
               </tr>

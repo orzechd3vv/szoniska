@@ -25,7 +25,7 @@ npm run dev
 1. https://console.cloud.google.com/
 2. Nowy projekt
 3. APIs & Services → Credentials → Create OAuth 2.0 Client ID
-4. Authorized redirect URIs: https://www.szoniska.pl/api/auth/callback/google
+4. Authorized redirect URIs: https://www.szoniska.xyz/api/auth/callback/google
 
 
 

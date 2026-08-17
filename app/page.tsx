@@ -25,20 +25,6 @@ export default function HomePage() {
       {/* Hero Section */}
       <section className="relative pt-36 sm:pt-48 pb-24 sm:pb-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 relative z-10 text-center">
-          
-          {/* Holographic Badge */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.85, y: -20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="inline-flex items-center gap-2.5 px-4 sm:px-6 py-2.5 sm:py-3 glass rounded-full border-primary-500/50 mb-8 sm:mb-10 shadow-[0_0_40px_rgba(168,85,247,0.35)] max-w-full text-left"
-          >
-            <FaCrown className="text-amber-400 animate-bounce shrink-0" size={14} />
-            <span className="text-[10px] sm:text-xs font-black uppercase tracking-[0.2em] sm:tracking-[0.3em] text-primary-200 truncate">
-              Cyber Edition • Mobile Optimized 2026
-            </span>
-            <FaBolt className="text-primary-400 shrink-0" size={12} />
-          </motion.div>
 
           {/* Monumental Headline */}
           <motion.h1

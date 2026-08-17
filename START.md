@@ -40,7 +40,7 @@ To zainstaluje wszystkie wymagane pakiety (Next.js, React, Prisma, NextAuth, Fra
 3. W menu: APIs & Services → Credentials
 4. Kliknij "Create Credentials" → "OAuth 2.0 Client ID"
 5. Application type: Web application
-6. Authorized redirect URIs: `https://www.szoniska.pl/api/auth/callback/google`
+6. Authorized redirect URIs: `https://www.szoniska.xyz/api/auth/callback/google`
 7. Skopiuj Client ID i Client Secret do `.env`
 
 ## ⚙️ Krok 4: Konfiguracja pliku .env
@@ -58,7 +58,7 @@ DATABASE_URL="mongodb://localhost:27017/szoniska"
 # LUB dla MongoDB Atlas:
 # DATABASE_URL="mongodb+srv://user:password@cluster.mongodb.net/szoniska"
 
-NEXTAUTH_URL="https://www.szoniska.pl"
+NEXTAUTH_URL="https://www.szoniska.xyz"
 NEXTAUTH_SECRET="WYGENERUJ_TUTAJ_LOSOWY_SECRET"
 
 GOOGLE_CLIENT_ID="twoj-google-client-id"
@@ -86,7 +86,7 @@ npx prisma db push
 npm run dev
 ```
 
-Otwórz przeglądarkę: https://www.szoniska.pl
+Otwórz przeglądarkę: https://www.szoniska.xyz
 
 ## 🎉 Gotowe!
 
