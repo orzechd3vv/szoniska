@@ -45,8 +45,9 @@ export async function GET(req: NextRequest) {
     const orderBy: any[] = [{ isPinned: 'desc' }];
 
     if (filter === 'popular') {
+      // Sort by most votes / positive likes
       orderBy.push({
-        comments: {
+        votes: {
           _count: 'desc'
         }
       });
