@@ -79,15 +79,18 @@ export async function GET(req: NextRequest) {
       take: limit,
     });
 
-    // Post-process to get accurate counts and user vote
-    const postsWithVotes = await Promise.all(posts.map(async (post) => {
-      const upvotes = await prisma.vote.count({
-        where: { postId: post.id, type: 'UPVOTE' }
-      });
-      const downvotes = await prisma.vote.count({
-        where: { postId: post.id, type: 'DOWNVOTE' }
-      });
-      
+    // Bulk fetch vote counts in 1 single query for blazing fast performance
+    const postIds = posts.map(p => p.id);
+    const voteAggregations = postIds.length > 0 ? await prisma.vote.groupBy({
+      by: ['postId', 'type'],
+      where: { postId: { in: postIds } },
+      _count: { type: true }
+    }) : [];
+
+    const postsWithVotes = posts.map((post) => {
+      const postVotes = voteAggregations.filter(v => v.postId === post.id);
+      const upvotes = postVotes.find(v => v.type === 'UPVOTE')?._count.type || 0;
+      const downvotes = postVotes.find(v => v.type === 'DOWNVOTE')?._count.type || 0;
       const userVote = (post as any).votes?.[0]?.type || null;
       
       return {
@@ -97,7 +100,7 @@ export async function GET(req: NextRequest) {
         userVote,
         votes: undefined // Remove raw votes from response
       };
-    }));
+    });
 
     return NextResponse.json({
       posts: postsWithVotes,
