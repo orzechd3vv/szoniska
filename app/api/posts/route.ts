@@ -11,9 +11,6 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get('search');
     const filter = searchParams.get('filter') || 'latest';
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = 6;
-    const skip = (page - 1) * limit;
     
     // Sprawdź czy użytkownik jest zablokowany
     if (session?.user) {
@@ -42,22 +39,6 @@ export async function GET(req: NextRequest) {
       ];
     }
 
-    const orderBy: any[] = [{ isPinned: 'desc' }];
-
-    if (filter === 'popular') {
-      // Sort by most votes / positive likes
-      orderBy.push({
-        votes: {
-          _count: 'desc'
-        }
-      });
-    } else {
-      orderBy.push({ createdAt: 'desc' });
-    }
-
-    const totalPosts = await prisma.post.count({ where: whereCondition });
-    const totalPages = Math.ceil(totalPosts / limit) || 1;
-
     const posts = await prisma.post.findMany({
       where: whereCondition,
       include: {
@@ -75,9 +56,7 @@ export async function GET(req: NextRequest) {
           select: { comments: true }
         }
       },
-      orderBy: orderBy,
-      skip,
-      take: limit,
+      orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
     });
 
     // Bulk fetch vote counts in 1 single query for blazing fast performance
@@ -103,12 +82,12 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    return NextResponse.json({
-      posts: postsWithVotes,
-      totalPages,
-      currentPage: page,
-      totalPosts,
-    });
+    // Sort in memory if popular (net positive likes: upvotes - downvotes)
+    if (filter === 'popular') {
+      postsWithVotes.sort((a, b) => (b.upvotes - b.downvotes) - (a.upvotes - a.downvotes));
+    }
+
+    return NextResponse.json(postsWithVotes);
   } catch (error) {
     console.error('Error fetching posts:', error);
     return NextResponse.json({ 

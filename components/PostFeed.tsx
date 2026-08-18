@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaSearch, FaTimes, FaThumbtack, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
@@ -12,6 +12,8 @@ interface PostFeedProps {
   filter?: 'latest' | 'popular';
 }
 
+const POSTS_PER_PAGE = 6;
+
 export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
   const { data: session } = useSession();
   const [posts, setPosts] = useState<Post[]>([]);
@@ -21,27 +23,15 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searching, setSearching] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const pagesCache = useRef<Record<number, Post[]>>({});
 
   useEffect(() => {
-    pagesCache.current = {};
-    setCurrentPage(1);
-    fetchPosts(1, searchQuery, true);
+    fetchPosts();
   }, [filter]);
 
-  const fetchPosts = async (page = 1, search?: string, forceRefresh = false) => {
-    // Instant load from cache if available
-    if (!forceRefresh && pagesCache.current[page]) {
-      setPosts(pagesCache.current[page]);
-      setCurrentPage(page);
-      setLoading(false);
-      return;
-    }
-
+  const fetchPosts = async (search?: string) => {
     setSearching(true);
     try {
-      let url = `/api/posts?filter=${filter}&page=${page}`;
+      let url = `/api/posts?filter=${filter}`;
       if (search) {
         url += `&search=${encodeURIComponent(search)}`;
       }
@@ -57,13 +47,8 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
       if (!res.ok) throw new Error('Failed to fetch');
       
       const data = await res.json();
-      const fetchedPosts = data.posts || [];
-      setPosts(fetchedPosts);
-      setTotalPages(data.totalPages || 1);
-      setCurrentPage(data.currentPage || 1);
-      
-      // Save to cache
-      pagesCache.current[page] = fetchedPosts;
+      setPosts(Array.isArray(data) ? data : []);
+      setCurrentPage(1);
     } catch (error) {
       console.error('Error fetching posts:', error);
     } finally {
@@ -74,23 +59,21 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    pagesCache.current = {};
-    setCurrentPage(1);
-    fetchPosts(1, searchQuery, true);
+    fetchPosts(searchQuery);
   };
 
   const handleClearSearch = () => {
     setSearchQuery('');
-    pagesCache.current = {};
-    setCurrentPage(1);
-    fetchPosts(1, undefined, true);
+    fetchPosts();
   };
+
+  const totalPages = Math.ceil(posts.length / POSTS_PER_PAGE) || 1;
+  const paginatedPosts = posts.slice((currentPage - 1) * POSTS_PER_PAGE, currentPage * POSTS_PER_PAGE);
 
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages) return;
     setCurrentPage(newPage);
-    fetchPosts(newPage, searchQuery);
-    // Note: intentionally NO window.scrollTo so screen stays in the exact same place!
+    // Note: intentionally NO scrolling so screen stays in the exact same position!
   };
 
   const handlePinPost = async (postId: string, pin: boolean) => {
@@ -102,8 +85,7 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
       });
 
       if (res.ok) {
-        pagesCache.current = {};
-        fetchPosts(currentPage, searchQuery || undefined, true);
+        fetchPosts(searchQuery || undefined);
       } else {
         const data = await res.json();
         alert(data.error || 'Nie udało się przypiąć posta');
@@ -195,8 +177,7 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
               onClick={() => {
                 if (tag === 'najnowsze') {
                   setSearchQuery('');
-                  pagesCache.current = {};
-                  fetchPosts(1, undefined, true);
+                  fetchPosts();
                 }
               }}
               className="text-[10px] text-gray-400 hover:text-primary-300 font-black uppercase tracking-widest transition-colors"
@@ -207,7 +188,7 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
         </div>
       </motion.div>
 
-      {posts.length === 0 ? (
+      {paginatedPosts.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -220,20 +201,20 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
       <>
         <AnimatePresence mode="wait">
           <motion.div
-            key={filter}
-            initial={{ opacity: 0, y: 20 }}
+            key={`${filter}-${currentPage}`}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
           >
-            {posts.map((post, index) => (
+            {paginatedPosts.map((post, index) => (
               <motion.div
                 key={post.id}
                 layout
-                initial={{ opacity: 0, scale: 0.9 }}
+                initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4, delay: index * 0.05 }}
+                transition={{ duration: 0.3, delay: index * 0.03 }}
                 className="relative"
               >
                 {post.isPinned && (
@@ -266,7 +247,7 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
           </motion.div>
         </AnimatePresence>
 
-        {/* Pagination Controls */}
+        {/* Pagination Controls - Instant Client-Side Switching */}
         {totalPages > 1 && (
           <div className="flex items-center justify-center gap-3 mt-16">
             <motion.button
@@ -313,10 +294,7 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
         <PostModal
           post={selectedPost}
           onClose={() => setSelectedPost(null)}
-          onUpdate={() => {
-            pagesCache.current = {};
-            fetchPosts(currentPage, searchQuery, true);
-          }}
+          onUpdate={() => fetchPosts(searchQuery || undefined)}
         />
       )}
     </>
