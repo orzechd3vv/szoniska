@@ -25,6 +25,7 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
+    setCurrentPage(1);
     fetchPosts();
   }, [filter]);
 
@@ -48,7 +49,6 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
       
       const data = await res.json();
       setPosts(Array.isArray(data) ? data : []);
-      setCurrentPage(1);
     } catch (error) {
       console.error('Error fetching posts:', error);
     } finally {
@@ -59,11 +59,13 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setCurrentPage(1);
     fetchPosts(searchQuery);
   };
 
   const handleClearSearch = () => {
     setSearchQuery('');
+    setCurrentPage(1);
     fetchPosts();
   };
 
@@ -73,7 +75,6 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages) return;
     setCurrentPage(newPage);
-    // Note: intentionally NO scrolling so screen stays in the exact same position!
   };
 
   const handlePinPost = async (postId: string, pin: boolean) => {
@@ -199,53 +200,43 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
         </motion.div>
       ) : (
       <>
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`${filter}-${currentPage}`}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-          >
-            {paginatedPosts.map((post, index) => (
-              <motion.div
-                key={post.id}
-                layout
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.3, delay: index * 0.03 }}
-                className="relative"
-              >
-                {post.isPinned && (
-                  <div className="absolute -top-2 -right-2 z-10 bg-yellow-500 text-black px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
-                    <FaThumbtack />
-                    Przypięte
-                  </div>
-                )}
-                <PostCard post={post} onClick={() => setSelectedPost(post)} />
-                {session?.user?.isAdmin && (
-                  <motion.button
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handlePinPost(post.id, !post.isPinned);
-                    }}
-                    className={`absolute top-2 left-2 z-10 p-2 rounded-full shadow-lg transition-colors ${
-                      post.isPinned
-                        ? 'bg-yellow-500 hover:bg-yellow-600 text-black'
-                        : 'bg-gray-800/90 hover:bg-gray-700 text-gray-400'
-                    }`}
-                    title={post.isPinned ? 'Odepnij post' : 'Przypnij post'}
-                  >
-                    <FaThumbtack />
-                  </motion.button>
-                )}
-              </motion.div>
-            ))}
-          </motion.div>
-        </AnimatePresence>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {paginatedPosts.map((post, index) => (
+            <motion.div
+              key={post.id}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.25, delay: index * 0.02 }}
+              className="relative"
+            >
+              {post.isPinned && (
+                <div className="absolute -top-2 -right-2 z-10 bg-yellow-500 text-black px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
+                  <FaThumbtack />
+                  Przypięte
+                </div>
+              )}
+              <PostCard post={post} onClick={() => setSelectedPost(post)} />
+              {session?.user?.isAdmin && (
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePinPost(post.id, !post.isPinned);
+                  }}
+                  className={`absolute top-2 left-2 z-10 p-2 rounded-full shadow-lg transition-colors ${
+                    post.isPinned
+                      ? 'bg-yellow-500 hover:bg-yellow-600 text-black'
+                      : 'bg-gray-800/90 hover:bg-gray-700 text-gray-400'
+                  }`}
+                  title={post.isPinned ? 'Odepnij post' : 'Przypnij post'}
+                >
+                  <FaThumbtack />
+                </motion.button>
+              )}
+            </motion.div>
+          ))}
+        </div>
 
         {/* Pagination Controls - Instant Client-Side Switching */}
         {totalPages > 1 && (
