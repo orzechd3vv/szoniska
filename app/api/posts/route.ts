@@ -11,6 +11,9 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get('search');
     const filter = searchParams.get('filter') || 'latest';
+    const page = parseInt(searchParams.get('page') || '1', 10);
+    const limit = 6;
+    const skip = (page - 1) * limit;
     
     // Sprawdź czy użytkownik jest zablokowany
     if (session?.user) {
@@ -51,6 +54,9 @@ export async function GET(req: NextRequest) {
       orderBy.push({ createdAt: 'desc' });
     }
 
+    const totalPosts = await prisma.post.count({ where: whereCondition });
+    const totalPages = Math.ceil(totalPosts / limit) || 1;
+
     const posts = await prisma.post.findMany({
       where: whereCondition,
       include: {
@@ -69,6 +75,8 @@ export async function GET(req: NextRequest) {
         }
       },
       orderBy: orderBy,
+      skip,
+      take: limit,
     });
 
     // Post-process to get accurate counts and user vote
@@ -91,7 +99,12 @@ export async function GET(req: NextRequest) {
       };
     }));
 
-    return NextResponse.json(postsWithVotes);
+    return NextResponse.json({
+      posts: postsWithVotes,
+      totalPages,
+      currentPage: page,
+      totalPosts,
+    });
   } catch (error) {
     console.error('Error fetching posts:', error);
     return NextResponse.json({ 

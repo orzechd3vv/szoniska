@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaSearch, FaTimes, FaThumbtack } from 'react-icons/fa';
+import { FaSearch, FaTimes, FaThumbtack, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import PostCard from './PostCard';
 import PostModal from './PostModal';
 import type { Post } from '@/types/post';
@@ -20,17 +20,21 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searching, setSearching] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
-    fetchPosts();
+    setCurrentPage(1);
+    fetchPosts(1, searchQuery);
   }, [filter]);
 
-  const fetchPosts = async (search?: string) => {
+  const fetchPosts = async (page = 1, search?: string) => {
     setSearching(true);
     try {
-      const url = search 
-        ? `/api/posts?search=${encodeURIComponent(search)}&filter=${filter}` 
-        : `/api/posts?filter=${filter}`;
+      let url = `/api/posts?filter=${filter}&page=${page}`;
+      if (search) {
+        url += `&search=${encodeURIComponent(search)}`;
+      }
       const res = await fetch(url);
       
       if (res.status === 403) {
@@ -43,7 +47,9 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
       if (!res.ok) throw new Error('Failed to fetch');
       
       const data = await res.json();
-      setPosts(data);
+      setPosts(data.posts || []);
+      setTotalPages(data.totalPages || 1);
+      setCurrentPage(data.currentPage || 1);
     } catch (error) {
       console.error('Error fetching posts:', error);
     } finally {
@@ -54,12 +60,21 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    fetchPosts(searchQuery);
+    setCurrentPage(1);
+    fetchPosts(1, searchQuery);
   };
 
   const handleClearSearch = () => {
     setSearchQuery('');
-    fetchPosts();
+    setCurrentPage(1);
+    fetchPosts(1);
+  };
+
+  const handlePageChange = (newPage: number) => {
+    if (newPage < 1 || newPage > totalPages) return;
+    setCurrentPage(newPage);
+    fetchPosts(newPage, searchQuery);
+    window.scrollTo({ top: 400, behavior: 'smooth' });
   };
 
   const handlePinPost = async (postId: string, pin: boolean) => {
@@ -71,7 +86,7 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
       });
 
       if (res.ok) {
-        fetchPosts(searchQuery || undefined);
+        fetchPosts(currentPage, searchQuery || undefined);
       } else {
         const data = await res.json();
         alert(data.error || 'Nie udało się przypiąć posta');
@@ -161,7 +176,10 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
             <button 
               key={tag}
               onClick={() => {
-                if (tag === 'najnowsze') fetchPosts();
+                if (tag === 'najnowsze') {
+                  setSearchQuery('');
+                  fetchPosts(1);
+                }
               }}
               className="text-[10px] text-gray-400 hover:text-primary-300 font-black uppercase tracking-widest transition-colors"
             >
@@ -181,60 +199,103 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
           <p className="text-gray-500">Spróbuj zmienić kryteria wyszukiwania</p>
         </motion.div>
       ) : (
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={filter}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-        >
-          {posts.map((post, index) => (
-            <motion.div
-              key={post.id}
-              layout
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.4, delay: index * 0.05 }}
-              className="relative"
+      <>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={filter}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
+          >
+            {posts.map((post, index) => (
+              <motion.div
+                key={post.id}
+                layout
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.4, delay: index * 0.05 }}
+                className="relative"
+              >
+                {post.isPinned && (
+                  <div className="absolute -top-2 -right-2 z-10 bg-yellow-500 text-black px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
+                    <FaThumbtack />
+                    Przypięte
+                  </div>
+                )}
+                <PostCard post={post} onClick={() => setSelectedPost(post)} />
+                {session?.user?.isAdmin && (
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePinPost(post.id, !post.isPinned);
+                    }}
+                    className={`absolute top-2 left-2 z-10 p-2 rounded-full shadow-lg transition-colors ${
+                      post.isPinned
+                        ? 'bg-yellow-500 hover:bg-yellow-600 text-black'
+                        : 'bg-gray-800/90 hover:bg-gray-700 text-gray-400'
+                    }`}
+                    title={post.isPinned ? 'Odepnij post' : 'Przypnij post'}
+                  >
+                    <FaThumbtack />
+                  </motion.button>
+                )}
+              </motion.div>
+            ))}
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Pagination Controls */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 mt-16">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="flex items-center gap-2 px-6 py-3 glass rounded-2xl border-white/15 text-white font-black text-xs uppercase tracking-widest disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation shadow-lg"
             >
-              {post.isPinned && (
-                <div className="absolute -top-2 -right-2 z-10 bg-yellow-500 text-black px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
-                  <FaThumbtack />
-                  Przypięte
-                </div>
-              )}
-              <PostCard post={post} onClick={() => setSelectedPost(post)} />
-              {session?.user?.isAdmin && (
-                <motion.button
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handlePinPost(post.id, !post.isPinned);
-                  }}
-                  className={`absolute top-2 left-2 z-10 p-2 rounded-full shadow-lg transition-colors ${
-                    post.isPinned
-                      ? 'bg-yellow-500 hover:bg-yellow-600 text-black'
-                      : 'bg-gray-800/90 hover:bg-gray-700 text-gray-400'
+              <FaChevronLeft size={10} /> Poprzednia
+            </motion.button>
+
+            <div className="flex items-center gap-2 px-4 py-2 glass rounded-2xl border-white/10">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`w-10 h-10 rounded-xl font-black text-xs transition-all touch-manipulation ${
+                    currentPage === page
+                      ? 'bg-gradient-to-r from-primary-600 to-purple-600 text-white shadow-[0_0_20px_rgba(168,85,247,0.7)]'
+                      : 'text-gray-400 hover:text-white hover:bg-white/10'
                   }`}
-                  title={post.isPinned ? 'Odepnij post' : 'Przypnij post'}
                 >
-                  <FaThumbtack />
-                </motion.button>
-              )}
-            </motion.div>
-          ))}
-        </motion.div>
-      </AnimatePresence>
+                  {page}
+                </button>
+              ))}
+            </div>
+
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="flex items-center gap-2 px-6 py-3 glass rounded-2xl border-white/15 text-white font-black text-xs uppercase tracking-widest disabled:opacity-40 disabled:cursor-not-allowed touch-manipulation shadow-lg"
+            >
+              Następna <FaChevronRight size={10} />
+            </motion.button>
+          </div>
+        )}
+      </>
       )}
 
       {selectedPost && (
         <PostModal
           post={selectedPost}
           onClose={() => setSelectedPost(null)}
-          onUpdate={fetchPosts}
+          onUpdate={() => fetchPosts(currentPage, searchQuery)}
         />
       )}
     </>
