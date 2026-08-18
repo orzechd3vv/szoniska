@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaSearch, FaTimes, FaThumbtack, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
@@ -22,13 +22,23 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
   const [searching, setSearching] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const pagesCache = useRef<Record<number, Post[]>>({});
 
   useEffect(() => {
+    pagesCache.current = {};
     setCurrentPage(1);
-    fetchPosts(1, searchQuery);
+    fetchPosts(1, searchQuery, true);
   }, [filter]);
 
-  const fetchPosts = async (page = 1, search?: string) => {
+  const fetchPosts = async (page = 1, search?: string, forceRefresh = false) => {
+    // Instant load from cache if available
+    if (!forceRefresh && pagesCache.current[page]) {
+      setPosts(pagesCache.current[page]);
+      setCurrentPage(page);
+      setLoading(false);
+      return;
+    }
+
     setSearching(true);
     try {
       let url = `/api/posts?filter=${filter}&page=${page}`;
@@ -47,9 +57,13 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
       if (!res.ok) throw new Error('Failed to fetch');
       
       const data = await res.json();
-      setPosts(data.posts || []);
+      const fetchedPosts = data.posts || [];
+      setPosts(fetchedPosts);
       setTotalPages(data.totalPages || 1);
       setCurrentPage(data.currentPage || 1);
+      
+      // Save to cache
+      pagesCache.current[page] = fetchedPosts;
     } catch (error) {
       console.error('Error fetching posts:', error);
     } finally {
@@ -60,21 +74,23 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    pagesCache.current = {};
     setCurrentPage(1);
-    fetchPosts(1, searchQuery);
+    fetchPosts(1, searchQuery, true);
   };
 
   const handleClearSearch = () => {
     setSearchQuery('');
+    pagesCache.current = {};
     setCurrentPage(1);
-    fetchPosts(1);
+    fetchPosts(1, undefined, true);
   };
 
   const handlePageChange = (newPage: number) => {
     if (newPage < 1 || newPage > totalPages) return;
     setCurrentPage(newPage);
     fetchPosts(newPage, searchQuery);
-    window.scrollTo({ top: 400, behavior: 'smooth' });
+    // Note: intentionally NO window.scrollTo so screen stays in the exact same place!
   };
 
   const handlePinPost = async (postId: string, pin: boolean) => {
@@ -86,7 +102,8 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
       });
 
       if (res.ok) {
-        fetchPosts(currentPage, searchQuery || undefined);
+        pagesCache.current = {};
+        fetchPosts(currentPage, searchQuery || undefined, true);
       } else {
         const data = await res.json();
         alert(data.error || 'Nie udało się przypiąć posta');
@@ -178,7 +195,8 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
               onClick={() => {
                 if (tag === 'najnowsze') {
                   setSearchQuery('');
-                  fetchPosts(1);
+                  pagesCache.current = {};
+                  fetchPosts(1, undefined, true);
                 }
               }}
               className="text-[10px] text-gray-400 hover:text-primary-300 font-black uppercase tracking-widest transition-colors"
@@ -295,7 +313,10 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
         <PostModal
           post={selectedPost}
           onClose={() => setSelectedPost(null)}
-          onUpdate={() => fetchPosts(currentPage, searchQuery)}
+          onUpdate={() => {
+            pagesCache.current = {};
+            fetchPosts(currentPage, searchQuery, true);
+          }}
         />
       )}
     </>
