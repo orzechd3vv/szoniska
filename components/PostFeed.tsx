@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { FaSearch, FaTimes, FaThumbtack, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import PostCard from './PostCard';
 import PostModal from './PostModal';
@@ -25,7 +25,6 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    setCurrentPage(1);
     fetchPosts();
   }, [filter]);
 
@@ -49,6 +48,7 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
       
       const data = await res.json();
       setPosts(Array.isArray(data) ? data : []);
+      setCurrentPage(1);
     } catch (error) {
       console.error('Error fetching posts:', error);
     } finally {
@@ -59,13 +59,11 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setCurrentPage(1);
     fetchPosts(searchQuery);
   };
 
   const handleClearSearch = () => {
     setSearchQuery('');
-    setCurrentPage(1);
     fetchPosts();
   };
 
@@ -126,14 +124,13 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
 
   return (
     <>
-      {/* Nowoczesna Wyszukiwarka */}
+      {/* Wyszukiwarka */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="mb-16"
       >
         <div className="relative group">
-          {/* Decorative Glow */}
           <div className="absolute -inset-1 bg-gradient-to-r from-primary-600/20 to-blue-600/20 rounded-[2.5rem] blur-2xl opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
           
           <form onSubmit={handleSearch} className="relative glass rounded-[2.5rem] border-white/10 p-2 flex flex-col md:flex-row gap-3">
@@ -169,7 +166,7 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
           </form>
         </div>
 
-        {/* Popular Tags / Quick Filter Hint */}
+        {/* Szybkie filtry */}
         <div className="flex flex-wrap gap-4 mt-6 px-6">
           <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest">Szybkie filtry:</span>
           {['najnowsze', 'popularne', 'przypięte'].map((tag) => (
@@ -200,15 +197,10 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
         </motion.div>
       ) : (
       <>
+        {/* Czysty, natychmiastowy grid postów bez podwójnych animacji i migotania */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {paginatedPosts.map((post, index) => (
-            <motion.div
-              key={post.id}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.25, delay: index * 0.02 }}
-              className="relative"
-            >
+          {paginatedPosts.map((post) => (
+            <div key={post.id} className="relative">
               {post.isPinned && (
                 <div className="absolute -top-2 -right-2 z-10 bg-yellow-500 text-black px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg">
                   <FaThumbtack />
@@ -234,11 +226,11 @@ export default function PostFeed({ filter = 'latest' }: PostFeedProps) {
                   <FaThumbtack />
                 </motion.button>
               )}
-            </motion.div>
+            </div>
           ))}
         </div>
 
-        {/* Pagination Controls - Instant Client-Side Switching */}
+        {/* Nawigacja stron */}
         {totalPages > 1 && (
           <div className="flex items-center justify-center gap-3 mt-16">
             <motion.button
