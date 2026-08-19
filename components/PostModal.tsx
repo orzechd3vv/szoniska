@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaTimes, FaUserSecret, FaCalendarAlt, FaShareAlt, FaComments, FaCheck, FaArrowLeft, FaUser, FaArrowUp, FaArrowDown } from 'react-icons/fa';
+import { FaTimes, FaUserSecret, FaCalendarAlt, FaShareAlt, FaComments, FaCheck, FaArrowLeft, FaUser, FaArrowUp, FaArrowDown, FaExpand } from 'react-icons/fa';
 import { createPortal } from 'react-dom';
 import { useSession } from 'next-auth/react';
 import VideoPlayer from './VideoPlayer';
 import CommentSection from './CommentSection';
+import ImageLightbox from './ImageLightbox';
 
 import { Post } from '@/types/post';
 
@@ -21,6 +22,7 @@ export default function PostModal({ post: initialPost, onClose, onUpdate }: Post
   const [post, setPost] = useState<Post>(initialPost);
   const [loading, setLoading] = useState(false);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [isCopied, setIsCopied] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [upvotes, setUpvotes] = useState(initialPost.upvotes || 0);
@@ -107,6 +109,14 @@ export default function PostModal({ post: initialPost, onClose, onUpdate }: Post
     ...(post.images || []).map(url => ({ type: 'image' as const, url }))
   ];
 
+  const imageStartIndex = post.videos?.length || 0;
+
+  const openLightbox = () => {
+    if (allMedia[currentMediaIndex]?.type === 'image' && post.images.length > 0) {
+      setLightboxIndex(currentMediaIndex - imageStartIndex);
+    }
+  };
+
   return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-0 overflow-hidden">
       {/* Background Glows */}
@@ -179,18 +189,30 @@ export default function PostModal({ post: initialPost, onClose, onUpdate }: Post
 
             {/* Left Column: Media */}
             <div className="lg:w-[60%] space-y-6">
-              <div className="relative aspect-video glass rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden border-white/15 bg-black shadow-2xl group/media">
+              <div className="relative h-[45vh] sm:h-[60vh] lg:h-auto lg:aspect-video glass rounded-[2.5rem] sm:rounded-[3rem] overflow-hidden border-white/15 bg-black shadow-2xl group/media">
                 <AnimatePresence mode="wait">
                   <motion.div key={currentMediaIndex} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="w-full h-full">
                     {allMedia[currentMediaIndex]?.type === 'video' ? (
                       <VideoPlayer src={allMedia[currentMediaIndex].url} />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center p-4">
+                      <div className="w-full h-full flex items-center justify-center cursor-zoom-in" onClick={openLightbox}>
                         <img src={allMedia[currentMediaIndex]?.url} className="max-w-full max-h-full object-contain" alt="" />
                       </div>
                     )}
                   </motion.div>
                 </AnimatePresence>
+
+                {allMedia[currentMediaIndex]?.type === 'image' && (
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={openLightbox}
+                    className="absolute top-4 sm:top-5 right-4 sm:right-5 z-30 w-11 h-11 sm:w-12 sm:h-12 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center backdrop-blur-sm shadow-xl transition-all touch-manipulation"
+                    title="Pełny ekran"
+                  >
+                    <FaExpand size={18} />
+                  </motion.button>
+                )}
 
                 {allMedia.length > 1 && (
                   <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-3 p-3 glass rounded-3xl border-white/15 z-20 overflow-x-auto max-w-[90%] scrollbar-hide">
@@ -281,6 +303,15 @@ export default function PostModal({ post: initialPost, onClose, onUpdate }: Post
           </div>
         </div>
       </motion.div>
+
+      {lightboxIndex !== null && post.images.length > 0 && (
+        <ImageLightbox
+          images={post.images}
+          initialIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          alt={post.title}
+        />
+      )}
     </div>,
     document.body
   );

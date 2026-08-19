@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaTimes, FaChevronLeft, FaChevronRight, FaSearchPlus, FaSearchMinus } from 'react-icons/fa';
 
@@ -17,6 +17,7 @@ export default function ImageLightbox({ images, initialIndex, onClose, alt = 'Zd
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const touchStartX = useRef<number | null>(null);
 
   const nextImage = () => {
     setCurrentIndex((prev) => (prev + 1) % images.length);
@@ -79,6 +80,28 @@ export default function ImageLightbox({ images, initialIndex, onClose, alt = 'Zd
     }
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (zoom === 1) {
+      touchStartX.current = e.touches[0].clientX;
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null || zoom > 1) {
+      touchStartX.current = null;
+      return;
+    }
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(deltaX) > 60) {
+      if (deltaX < 0) {
+        nextImage();
+      } else {
+        prevImage();
+      }
+    }
+    touchStartX.current = null;
+  };
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -105,7 +128,7 @@ export default function ImageLightbox({ images, initialIndex, onClose, alt = 'Zd
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
-        className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-sm"
+        className="fixed inset-0 z-[120] flex items-center justify-center bg-black/95 backdrop-blur-sm"
         onClick={(e) => {
           e.stopPropagation();
           onClose();
@@ -178,7 +201,9 @@ export default function ImageLightbox({ images, initialIndex, onClose, alt = 'Zd
           onMouseUp={handleMouseUp}
           onMouseLeave={handleMouseUp}
           onWheel={handleWheel}
-          style={{ cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          style={{ cursor: zoom > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default', touchAction: 'none' }}
         >
           <AnimatePresence mode="wait">
             <motion.img
@@ -213,10 +238,10 @@ export default function ImageLightbox({ images, initialIndex, onClose, alt = 'Zd
                 e.stopPropagation();
                 prevImage();
               }}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-4 rounded-full backdrop-blur-sm transition-all z-10"
+              className="absolute left-3 sm:left-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-3 sm:p-4 rounded-full backdrop-blur-sm transition-all z-10 shadow-xl"
               title="Poprzednie (←)"
             >
-              <FaChevronLeft size={28} />
+              <FaChevronLeft size={24} className="sm:text-[28px]" />
             </motion.button>
             <motion.button
               initial={{ opacity: 0, x: 20 }}
@@ -229,10 +254,10 @@ export default function ImageLightbox({ images, initialIndex, onClose, alt = 'Zd
                 e.stopPropagation();
                 nextImage();
               }}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white p-4 rounded-full backdrop-blur-sm transition-all z-10"
+              className="absolute right-3 sm:right-4 top-1/2 -translate-y-1/2 bg-black/60 hover:bg-black/80 text-white p-3 sm:p-4 rounded-full backdrop-blur-sm transition-all z-10 shadow-xl"
               title="Następne (→)"
             >
-              <FaChevronRight size={28} />
+              <FaChevronRight size={24} className="sm:text-[28px]" />
             </motion.button>
 
             {/* Licznik zdjęć */}
@@ -270,7 +295,7 @@ export default function ImageLightbox({ images, initialIndex, onClose, alt = 'Zd
                   setCurrentIndex(idx);
                   resetZoom();
                 }}
-                className={`w-16 h-16 cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
+                className={`w-14 h-14 sm:w-16 sm:h-16 cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
                   idx === currentIndex
                     ? 'border-purple-500 shadow-lg shadow-purple-500/50'
                     : 'border-transparent opacity-60 hover:opacity-100'

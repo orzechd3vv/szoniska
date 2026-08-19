@@ -3,10 +3,11 @@
 import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaArrowLeft, FaUserSecret, FaCalendarAlt, FaExclamationTriangle, FaTrash, FaFacebook, FaInstagram, FaTiktok, FaShareAlt, FaPlus, FaComments, FaHistory, FaShieldAlt, FaCheck, FaShare } from 'react-icons/fa';
+import { FaArrowLeft, FaUserSecret, FaCalendarAlt, FaExclamationTriangle, FaTrash, FaFacebook, FaInstagram, FaTiktok, FaShareAlt, FaPlus, FaComments, FaHistory, FaShieldAlt, FaCheck, FaShare, FaExpand } from 'react-icons/fa';
 import { useSession } from 'next-auth/react';
 import VideoPlayer from '@/components/VideoPlayer';
 import CommentSection from '@/components/CommentSection';
+import ImageLightbox from '@/components/ImageLightbox';
 
 interface Post {
   id: string;
@@ -39,6 +40,7 @@ export default function PostPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [isExiting, setIsExiting] = useState(false);
   const [isCopied, setIsCopied] = useState(false);
 
@@ -100,6 +102,14 @@ export default function PostPage() {
     ...(post.videos || []).map(url => ({ type: 'video' as const, url })),
     ...(post.images || []).map(url => ({ type: 'image' as const, url }))
   ];
+
+  const imageStartIndex = post.videos?.length || 0;
+
+  const openLightbox = () => {
+    if (allMedia[currentMediaIndex]?.type === 'image' && post.images.length > 0) {
+      setLightboxIndex(currentMediaIndex - imageStartIndex);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#020202] text-white selection:bg-primary-500/30 overflow-x-hidden">
@@ -218,7 +228,7 @@ export default function PostPage() {
           <div className="flex flex-col lg:flex-row gap-16">
             {/* Left Column: Media Gallery */}
             <div className="lg:w-[60%] space-y-8">
-              <div className="relative aspect-video glass rounded-[3rem] overflow-hidden border-white/10 bg-black shadow-[0_0_100px_rgba(0,0,0,0.8)] group/media">
+              <div className="relative h-[45vh] sm:h-[60vh] lg:h-auto lg:aspect-video glass rounded-[3rem] overflow-hidden border-white/10 bg-black shadow-[0_0_100px_rgba(0,0,0,0.8)] group/media">
                 <AnimatePresence mode="wait">
                   <motion.div
                     key={currentMediaIndex}
@@ -230,12 +240,24 @@ export default function PostPage() {
                     {allMedia[currentMediaIndex]?.type === 'video' ? (
                       <VideoPlayer src={allMedia[currentMediaIndex].url} className="w-full h-full" />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center p-4">
-                        <img src={allMedia[currentMediaIndex]?.url} className="max-w-full max-h-full object-contain rounded-2xl" alt="" />
+                      <div className="w-full h-full flex items-center justify-center cursor-zoom-in" onClick={openLightbox}>
+                        <img src={allMedia[currentMediaIndex]?.url} className="max-w-full max-h-full object-contain" alt="" />
                       </div>
                     )}
                   </motion.div>
                 </AnimatePresence>
+
+                {allMedia[currentMediaIndex]?.type === 'image' && (
+                  <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={openLightbox}
+                    className="absolute top-4 sm:top-5 right-4 sm:right-5 z-30 w-11 h-11 sm:w-12 sm:h-12 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center backdrop-blur-sm shadow-xl transition-all touch-manipulation"
+                    title="Pełny ekran"
+                  >
+                    <FaExpand size={18} />
+                  </motion.button>
+                )}
 
                 {/* Media Counter Overlay - Hidden unless hovering */}
                 {allMedia.length > 1 && (
@@ -321,6 +343,15 @@ export default function PostPage() {
           </div>
         </div>
       </motion.div>
+
+      {lightboxIndex !== null && post.images.length > 0 && (
+        <ImageLightbox
+          images={post.images}
+          initialIndex={lightboxIndex}
+          onClose={() => setLightboxIndex(null)}
+          alt={post.title}
+        />
+      )}
     </div>
   );
 }

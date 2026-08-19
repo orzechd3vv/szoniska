@@ -2,9 +2,10 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { FaFacebook, FaInstagram, FaTiktok, FaCalendarAlt, FaChevronRight, FaArrowUp, FaArrowDown, FaUserSecret } from 'react-icons/fa';
+import { FaFacebook, FaInstagram, FaTiktok, FaCalendarAlt, FaChevronRight, FaArrowUp, FaArrowDown, FaUserSecret, FaExpand } from 'react-icons/fa';
 import type { Post } from '@/types/post';
 import { useSession } from 'next-auth/react';
+import ImageLightbox from './ImageLightbox';
 
 interface PostCardProps {
   post: Post;
@@ -16,6 +17,7 @@ export default function PostCard({ post, onClick }: PostCardProps) {
   const [upvotes, setUpvotes] = useState(post.upvotes || 0);
   const [downvotes, setDownvotes] = useState(post.downvotes || 0);
   const [userVote, setUserVote] = useState<'UPVOTE' | 'DOWNVOTE' | null>(post.userVote || null);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
 
   const totalMedia = post.images.length + (post.videos?.length || 0);
   const hasVideos = post.videos && post.videos.length > 0;
@@ -78,17 +80,18 @@ export default function PostCard({ post, onClick }: PostCardProps) {
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      whileHover={{ y: -10, scale: 1.015 }}
-      onClick={onClick}
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        whileHover={{ y: -10, scale: 1.015 }}
+        onClick={onClick}
       className="group relative glass rounded-[3rem] overflow-hidden cursor-pointer transition-all duration-500 hover:border-primary-500/70 hover:shadow-[0_20px_70px_rgba(168,85,247,0.4)] bg-gradient-to-b from-white/[0.07] to-transparent border border-white/10"
     >
       {/* Media Preview */}
       {totalMedia > 0 && (
-        <div className="relative h-80 overflow-hidden bg-black/60">
+        <div className="relative h-80 lg:h-96 overflow-hidden bg-black/60">
           {hasVideos ? (() => {
             const videoUrl = post.videos![0];
             const optimizedVideoUrl = videoUrl.includes('cloudinary.com') && videoUrl.includes('/video/upload/')
@@ -110,8 +113,27 @@ export default function PostCard({ post, onClick }: PostCardProps) {
             <img
               src={post.images[0]}
               alt={post.title}
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (post.images.length > 0) setLightboxIndex(0);
+              }}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110 cursor-zoom-in"
             />
+          )}
+          
+          {post.images.length > 0 && (
+            <motion.button
+              whileHover={{ scale: 1.1 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={(e) => {
+                e.stopPropagation();
+                setLightboxIndex(0);
+              }}
+              className="absolute top-5 right-5 z-20 w-11 h-11 bg-black/60 hover:bg-black/80 text-white rounded-full flex items-center justify-center backdrop-blur-sm shadow-xl transition-all touch-manipulation"
+              title="Pełny ekran"
+            >
+              <FaExpand size={16} />
+            </motion.button>
           )}
           
           {/* Media Count Badge */}
@@ -250,5 +272,15 @@ export default function PostCard({ post, onClick }: PostCardProps) {
         </div>
       </div>
     </motion.div>
+
+    {lightboxIndex !== null && post.images.length > 0 && (
+      <ImageLightbox
+        images={post.images}
+        initialIndex={lightboxIndex}
+        onClose={() => setLightboxIndex(null)}
+        alt={post.title}
+      />
+    )}
+    </>
   );
 }
