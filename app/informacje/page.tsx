@@ -112,11 +112,11 @@ export default function InformacjePage() {
               <p className="text-primary-300 font-extrabold text-xs uppercase tracking-[0.2em] mb-6">Partner Techniczny</p>
               
               {/* Logo Slot */}
-              <div className="w-full h-36 rounded-2xl bg-black/60 border-2 border-dashed border-primary-500/40 flex items-center justify-center relative overflow-hidden p-2">
+              <div className="w-full h-36 rounded-2xl bg-black border-2 border-dashed border-primary-500/40 flex items-center justify-center relative overflow-hidden p-2">
                 <img 
                   src="/mvp.png" 
                   alt="MVP Entertainment" 
-                  className="max-h-full max-w-full object-contain drop-shadow-[0_0_15px_rgba(168,85,247,0.6)]" 
+                  className="max-h-full max-w-full object-contain" 
                 />
               </div>
             </motion.div>
@@ -136,11 +136,11 @@ export default function InformacjePage() {
               <p className="text-amber-400 font-extrabold text-xs uppercase tracking-[0.2em] mb-6">Główny Sponsor</p>
               
               {/* Logo Slot */}
-              <div className="w-full h-36 rounded-2xl bg-black/60 border-2 border-dashed border-amber-500/40 flex items-center justify-center relative overflow-hidden p-2">
+              <div className="w-full h-36 rounded-2xl bg-black border-2 border-dashed border-amber-500/40 flex items-center justify-center relative overflow-hidden p-2">
                 <img 
                   src="/777.jpg" 
                   alt="777 Sponsor" 
-                  className="max-h-full max-w-full object-contain drop-shadow-[0_0_15px_rgba(245,158,11,0.6)]" 
+                  className="max-h-full max-w-full object-contain" 
                 />
               </div>
             </motion.div>
