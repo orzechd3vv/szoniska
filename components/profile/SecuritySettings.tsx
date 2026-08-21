@@ -320,15 +320,15 @@ export default function SecuritySettings() {
                 exit={{ opacity: 0, scale: 0.9 }}
                 className="glass-dark rounded-[3rem] p-10 border-primary-500/20 shadow-2xl space-y-10"
               >
-                <div className="flex flex-col lg:flex-row gap-10 items-center">
+                <div className="flex flex-col items-center gap-10">
                   <div className="relative group">
-                    <div className="absolute -inset-2 bg-primary-500/20 blur-2xl group-hover:bg-primary-500/40 transition-all duration-700" />
-                    <div className="bg-white p-6 rounded-[2.5rem] relative">
-                      <Image src={qrCode} alt="QR Code" width={180} height={180} className="rounded-xl" />
+                    <div className="absolute -inset-3 bg-primary-500/25 blur-3xl group-hover:bg-primary-500/40 transition-all duration-700" />
+                    <div className="bg-white p-8 rounded-[2.5rem] relative shadow-[0_0_50px_rgba(168,85,247,0.3)]">
+                      <Image src={qrCode} alt="QR Code" width={300} height={300} className="rounded-xl" />
                     </div>
                   </div>
-                  <div className="flex-1 space-y-6">
-                    <h4 className="text-white font-black text-sm uppercase tracking-widest italic">Kroki konfiguracji:</h4>
+                  <div className="flex-1 space-y-6 w-full max-w-md">
+                    <h4 className="text-white font-black text-lg uppercase tracking-widest italic text-center">Kroki konfiguracji:</h4>
                     <div className="space-y-4">
                       {[
                         'Otwórz Google Authenticator lub podobną aplikację.',
