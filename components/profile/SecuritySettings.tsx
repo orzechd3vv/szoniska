@@ -320,16 +320,16 @@ export default function SecuritySettings() {
                 exit={{ opacity: 0, scale: 0.9 }}
                 className="glass-dark rounded-[3rem] p-10 border-primary-500/20 shadow-2xl space-y-10"
               >
-                <div className="flex flex-col items-center gap-10">
+                <div className="flex flex-col items-center gap-8">
                   <div className="relative group">
                     <div className="absolute -inset-3 bg-primary-500/25 blur-3xl group-hover:bg-primary-500/40 transition-all duration-700" />
-                    <div className="bg-white p-8 rounded-[2.5rem] relative shadow-[0_0_50px_rgba(168,85,247,0.3)]">
-                      <Image src={qrCode} alt="QR Code" width={300} height={300} className="rounded-xl" />
+                    <div className="bg-white p-5 sm:p-8 rounded-[2.5rem] relative shadow-[0_0_50px_rgba(168,85,247,0.3)]">
+                      <Image src={qrCode} alt="QR Code" width={300} height={300} className="rounded-xl w-48 h-48 sm:w-[300px] sm:h-[300px]" />
                     </div>
                   </div>
-                  <div className="flex-1 space-y-6 w-full max-w-md">
-                    <h4 className="text-white font-black text-lg uppercase tracking-widest italic text-center">Kroki konfiguracji:</h4>
-                    <div className="space-y-4">
+                  <div className="space-y-6 w-full max-w-md text-center">
+                    <h4 className="text-white font-black text-lg uppercase tracking-widest italic">Kroki konfiguracji:</h4>
+                    <div className="space-y-4 text-left">
                       {[
                         'Otwórz Google Authenticator lub podobną aplikację.',
                         'Zeskanuj widoczny kod QR telefonem.',
@@ -408,19 +408,19 @@ export default function SecuritySettings() {
                   <p className="text-[10px] text-gray-500 font-black leading-relaxed uppercase tracking-[0.2em] max-w-md opacity-80">
                     Operacja ta drastycznie obniży odporność Twojego profilu na ataki. Wymaga aktualnego tokena w celu autoryzacji usunięcia ochrony.
                   </p>
-                  <div className="flex gap-4">
+                  <div className="flex flex-col sm:flex-row gap-4">
                     <input
                       type="text"
                       value={verificationCode}
                       onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                      className="flex-1 bg-black/40 border border-white/10 rounded-2xl px-6 py-5 text-center text-2xl font-black text-white tracking-[0.4em] focus:outline-none focus:border-red-500/50 transition-all shadow-inner"
+                      className="flex-1 bg-black/40 border border-white/10 rounded-2xl px-6 py-5 text-center text-2xl font-black text-white tracking-[0.4em] focus:outline-none focus:border-red-500/50 transition-all shadow-inner min-w-0"
                       placeholder="TOKEN"
                       maxLength={6}
                     />
                     <button 
                       onClick={handleDisable2FA} 
                       disabled={verificationCode.length !== 6 || twoFactorLoading} 
-                      className="bg-red-600 hover:bg-red-700 text-white font-black px-10 rounded-2xl text-[10px] uppercase tracking-[0.2em] transition-all active:scale-95 disabled:opacity-50"
+                      className="bg-red-600 hover:bg-red-700 text-white font-black px-8 sm:px-10 py-5 rounded-2xl text-[10px] uppercase tracking-[0.2em] transition-all active:scale-95 disabled:opacity-50 whitespace-nowrap shrink-0"
                     >
                       Dezaktywuj
                     </button>
